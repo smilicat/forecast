@@ -9,28 +9,33 @@ title: "LRKPM"
 #| echo: false
 #| error: false
 # Ielādēt nepieciešamās bibliotēkas (nokomentēts, lai norādītu nepieciešamo)
-library(httr)
-library(jsonlite)
+
 library(forecast)
 library(tidyverse)
+library(ggrepel) 
 
 # Izveidojiet datu rāmi ar sākotnējiem datiem
 darba_izmaksas <- data.frame(
   Gads = 2005:2023, # Gadu diapazons
-  Izmaksas = c(2.19, 2.75, 3.53, 4.38, 4.28, 4.14, 4.34, 4.45, 4.78, 5.23, 5.83, 6.23, 6.65, 7.58, 8.11, 8.60, 8.75, 9.48, 10.48)
+  Izmaksas = c(2.19, 2.75, 3.53, 4.38, 4.28, 4.14, 4.34, 4.45, 4.78, 5.23, 5.83, 6.23, 6.65, 7.58, 8.11, 8.60, 8.75, 9.48, 10.48),
+  Datu_tips = "Vēsturiskie",
+  Prognoze = NA,
+  LCL = NA,
+  UCL = NA
 )
+
 
 # Nodrošināt, ka kolonnas ir skaitliskas
 darba_izmaksas$Gads <- as.numeric(darba_izmaksas$Gads)
 ```
 
-### Sākotnējie dati 
+### Sākotnējie dati
 
 [*Vienas stundas darbaspēka izmaksas pa darbības veidiem (eiro) 2005 - 2023*](https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__EMP__DI__DIS/DIS010/)
 
 ```{r}
 #| echo: false
-tibble(darba_izmaksas)
+tibble(darba_izmaksas[, c("Gads", "Izmaksas")])
 ```
 
 Trendu izpēte
@@ -45,15 +50,12 @@ log_mod <- lm(Izmaksas ~ log(Gads), data = darba_izmaksas)
 # Eksponenciālais modelis
 exp_mod <- lm(log(Izmaksas) ~ Gads, data = darba_izmaksas)
 
-# Jaudas modelis
+# Pakāpes modelis
 power_mod <- lm(log(Izmaksas) ~ log(Gads), data = darba_izmaksas)
-
-# Kustīgais vidējais (Moving Average)
-darba_izmaksas$Moving_Avg <- zoo::rollmean(darba_izmaksas$Izmaksas, k = 3, fill = NA)
 
 # Tabula ar modeļiem un R^2 vērtībām
 trend_table <- data.frame(
-  Modelis = c("Lineārais", "Logaritmiskais", "Eksponenciālais", "Jaudas"),
+  Modelis = c("Lineārais", "Logaritmiskais", "Eksponenciālais", "Pakāpes"),
   Formula = c(
     paste0("y = ", round(coef(lin_mod)[1], 2), " + ", round(coef(lin_mod)[2], 2), "*x"),
     paste0("y = ", round(coef(log_mod)[1], 2), " + ", round(coef(log_mod)[2], 2), "*log(x)"),
@@ -65,6 +67,92 @@ trend_table <- data.frame(
          summary(exp_mod)$r.squared, 
          summary(power_mod)$r.squared)
 )
+# Noapaļo R2 
+trend_table$R2 <- round(trend_table$R2, 2)
 
-print(trend_table)
+tibble(trend_table)
+```
+
+## Prognozes veidošana
+
+```{r}
+# Prognoze nākamajiem 5 gadiem ar ticamības intervāliem
+forecast_years <- data.frame(
+  Gads = 2024:2028,
+  Prognoze = predict(lin_mod, newdata = data.frame(Gads = 2024:2028)),
+  Izmaksas = NA,
+  Datu_tips = "Prognoze"
+)
+
+# Papildināt ar ticamības intervāliem
+forecast_result <- round(predict(lin_mod, newdata = data.frame(Gads = 2024:2028), interval = "prediction", level = 0.95), 3)
+
+forecast_years$LCL <- round(forecast_result[, "lwr"], 3)
+forecast_years$UCL <- round(forecast_result[, "upr"], 3)
+
+# Apvienot sākotnējos datus ar prognozi
+pilns_datu_rāmis <- rbind(darba_izmaksas, forecast_years)
+
+# Izvadīt pilno datu rāmi
+print(pilns_datu_rāmis)
+```
+
+# Prognozes veidošana 
+
+```{r}
+#| warning: false
+#| echo: false
+#| error: false
+
+
+# Iegūt lineārā modeļa koeficientus
+intercept <- coef(lin_mod)[1]
+slope <- coef(lin_mod)[2]
+
+# Vizualizācija ar ggplot2
+ggplot(pilns_datu_rāmis, aes(x = Gads)) +
+  # Ticamības intervāli
+  geom_ribbon(aes(ymin = LCL, ymax = UCL), alpha = 0.2, fill = "blue") +
+  
+  # Vēsturiskie dati līnija
+  geom_line(aes(y = Izmaksas, color = "Vēsturiskie dati"), size = 1) +
+  geom_point(aes(y = Izmaksas, color = "Vēsturiskie dati"), size = 2, shape = 16) +
+  
+  # Prognozes līnija
+  geom_line(aes(y = Prognoze, color = "Prognoze"), linetype = "dashed", size = 1) +
+  geom_point(aes(y = Prognoze, color = "Prognoze"), size = 2, shape = 17) +
+  
+  
+  # Līnijas stilizācija
+  scale_color_manual(
+    values = c("Vēsturiskie dati" = "#1F77B4", "Prognoze" = "#FF7F0E"),
+    name = "Datu tips"
+  ) +
+  
+  # Virsraksts un etiķetes
+  labs(
+    title = "Darbaspēka izmaksu vēsturiskie dati un prognoze",
+    subtitle = bquote(bold("Lineārā modeļa formula:") ~ italic(y) == .(round(intercept, 2)) + .(round(slope, 2)) * italic(x)),
+    x = "Gads", 
+    y = "Izmaksas (eiro)", 
+    caption = bquote(bold("R2:") ~ .(round(summary(lin_mod)$r.squared, 3)))
+  ) +
+  
+  
+  # Tēma
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    panel.grid.minor = element_line(color = "lightgray", linetype = "dotted")
+  ) +
+  # Y ass sadalījums
+  scale_y_continuous(breaks = seq(1, 12, by = 1)) +
+  # X ass sadalījums
+  scale_x_continuous(breaks = seq(2005, 2028, by = 3))
+
+# Izvadīt papildus informāciju konsoles izvadē
+cat(sprintf("Lineārā modeļa formula: y = %.2f + %.2f * x\n", intercept, slope))
+cat(sprintf("R-squared: %.3f\n", summary(lin_mod)$r.squared))
 ```

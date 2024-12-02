@@ -150,6 +150,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#sākotnējie-dati" id="toc-sākotnējie-dati" class="nav-link" data-scroll-target="#sākotnējie-dati">Sākotnējie dati</a></li>
   </ul></li>
+  <li><a href="#prognozes-veidošana" id="toc-prognozes-veidošana" class="nav-link" data-scroll-target="#prognozes-veidošana">Prognozes veidošana</a></li>
+  <li><a href="#prognozes-veidošana-1" id="toc-prognozes-veidošana-1" class="nav-link" data-scroll-target="#prognozes-veidošana-1">Prognozes veidošana</a></li>
   </ul>
 </nav>
     </div>
@@ -217,39 +219,109 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Eksponenciālais modelis</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>exp_mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(Izmaksas) <span class="sc">~</span> Gads, <span class="at">data =</span> darba_izmaksas)</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Jaudas modelis</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Pakāpes modelis</span></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>power_mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(Izmaksas) <span class="sc">~</span> <span class="fu">log</span>(Gads), <span class="at">data =</span> darba_izmaksas)</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Kustīgais vidējais (Moving Average)</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>darba_izmaksas<span class="sc">$</span>Moving_Avg <span class="ot">&lt;-</span> zoo<span class="sc">::</span><span class="fu">rollmean</span>(darba_izmaksas<span class="sc">$</span>Izmaksas, <span class="at">k =</span> <span class="dv">3</span>, <span class="at">fill =</span> <span class="cn">NA</span>)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Tabula ar modeļiem un R^2 vērtībām</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>trend_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">Modelis =</span> <span class="fu">c</span>(<span class="st">"Lineārais"</span>, <span class="st">"Logaritmiskais"</span>, <span class="st">"Eksponenciālais"</span>, <span class="st">"Jaudas"</span>),</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">Formula =</span> <span class="fu">c</span>(</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(lin_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(lin_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*x"</span>),</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(log_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(log_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*log(x)"</span>),</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = exp("</span>, <span class="fu">round</span>(<span class="fu">coef</span>(exp_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(exp_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*x)"</span>),</span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = exp("</span>, <span class="fu">round</span>(<span class="fu">coef</span>(power_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(power_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*log(x))"</span>)</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">R2 =</span> <span class="fu">c</span>(<span class="fu">summary</span>(lin_mod)<span class="sc">$</span>r.squared, </span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summary</span>(log_mod)<span class="sc">$</span>r.squared, </span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summary</span>(exp_mod)<span class="sc">$</span>r.squared, </span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summary</span>(power_mod)<span class="sc">$</span>r.squared)</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(trend_table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Tabula ar modeļiem un R^2 vērtībām</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>trend_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">Modelis =</span> <span class="fu">c</span>(<span class="st">"Lineārais"</span>, <span class="st">"Logaritmiskais"</span>, <span class="st">"Eksponenciālais"</span>, <span class="st">"Pakāpes"</span>),</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">Formula =</span> <span class="fu">c</span>(</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(lin_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(lin_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*x"</span>),</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(log_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(log_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*log(x)"</span>),</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = exp("</span>, <span class="fu">round</span>(<span class="fu">coef</span>(exp_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(exp_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*x)"</span>),</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = exp("</span>, <span class="fu">round</span>(<span class="fu">coef</span>(power_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(power_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*log(x))"</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">R2 =</span> <span class="fu">c</span>(<span class="fu">summary</span>(lin_mod)<span class="sc">$</span>r.squared, </span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summary</span>(log_mod)<span class="sc">$</span>r.squared, </span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summary</span>(exp_mod)<span class="sc">$</span>r.squared, </span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summary</span>(power_mod)<span class="sc">$</span>r.squared)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Noapaļo R2 </span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>trend_table<span class="sc">$</span>R2 <span class="ot">&lt;-</span> <span class="fu">round</span>(trend_table<span class="sc">$</span>R2, <span class="dv">2</span>)</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(trend_table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>          Modelis                           Formula        R2
-1       Lineārais               y = -823.6 + 0.41*x 0.9558133
-2  Logaritmiskais      y = -6303.54 + 829.33*log(x) 0.9554602
-3 Eksponenciālais         y = exp(-147.28 + 0.07*x) 0.9519369
-4          Jaudas y = exp(-1131.69 + 148.97*log(x)) 0.9520646</code></pre>
+<pre><code># A tibble: 4 × 3
+  Modelis         Formula                              R2
+  &lt;chr&gt;           &lt;chr&gt;                             &lt;dbl&gt;
+1 Lineārais       y = -823.6 + 0.41*x                0.96
+2 Logaritmiskais  y = -6303.54 + 829.33*log(x)       0.96
+3 Eksponenciālais y = exp(-147.28 + 0.07*x)          0.95
+4 Pakāpes         y = exp(-1131.69 + 148.97*log(x))  0.95</code></pre>
 </div>
 </div>
-
-
 </section>
+</section>
+<section id="prognozes-veidošana" class="level2">
+<h2 class="anchored" data-anchor-id="prognozes-veidošana">Prognozes veidošana</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prognoze nākamajiem 5 gadiem ar ticamības intervāliem</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>forecast_years <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Gads =</span> <span class="dv">2024</span><span class="sc">:</span><span class="dv">2028</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Prognoze =</span> <span class="fu">predict</span>(lin_mod, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">Gads =</span> <span class="dv">2024</span><span class="sc">:</span><span class="dv">2028</span>)),</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Izmaksas =</span> <span class="cn">NA</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">Datu_tips =</span> <span class="st">"Prognoze"</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Papildināt ar ticamības intervāliem</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>forecast_result <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">predict</span>(lin_mod, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">Gads =</span> <span class="dv">2024</span><span class="sc">:</span><span class="dv">2028</span>), <span class="at">interval =</span> <span class="st">"prediction"</span>, <span class="at">level =</span> <span class="fl">0.95</span>), <span class="dv">3</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>forecast_years<span class="sc">$</span>LCL <span class="ot">&lt;-</span> <span class="fu">round</span>(forecast_result[, <span class="st">"lwr"</span>], <span class="dv">3</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>forecast_years<span class="sc">$</span>UCL <span class="ot">&lt;-</span> <span class="fu">round</span>(forecast_result[, <span class="st">"upr"</span>], <span class="dv">3</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Apvienot sākotnējos datus ar prognozi</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>pilns_datu_rāmis <span class="ot">&lt;-</span> <span class="fu">rbind</span>(darba_izmaksas, forecast_years)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Izvadīt pilno datu rāmi</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(pilns_datu_rāmis)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Gads Izmaksas   Datu_tips Prognoze    LCL    UCL
+1   2005     2.19 Vēsturiskie       NA     NA     NA
+2   2006     2.75 Vēsturiskie       NA     NA     NA
+3   2007     3.53 Vēsturiskie       NA     NA     NA
+4   2008     4.38 Vēsturiskie       NA     NA     NA
+5   2009     4.28 Vēsturiskie       NA     NA     NA
+6   2010     4.14 Vēsturiskie       NA     NA     NA
+7   2011     4.34 Vēsturiskie       NA     NA     NA
+8   2012     4.45 Vēsturiskie       NA     NA     NA
+9   2013     4.78 Vēsturiskie       NA     NA     NA
+10  2014     5.23 Vēsturiskie       NA     NA     NA
+11  2015     5.83 Vēsturiskie       NA     NA     NA
+12  2016     6.23 Vēsturiskie       NA     NA     NA
+13  2017     6.65 Vēsturiskie       NA     NA     NA
+14  2018     7.58 Vēsturiskie       NA     NA     NA
+15  2019     8.11 Vēsturiskie       NA     NA     NA
+16  2020     8.60 Vēsturiskie       NA     NA     NA
+17  2021     8.75 Vēsturiskie       NA     NA     NA
+18  2022     9.48 Vēsturiskie       NA     NA     NA
+19  2023    10.48 Vēsturiskie       NA     NA     NA
+110 2024       NA    Prognoze 10.00175  8.803 11.201
+21  2025       NA    Prognoze 10.41361  9.197 11.630
+31  2026       NA    Prognoze 10.82547  9.589 12.061
+41  2027       NA    Prognoze 11.23733  9.981 12.494
+51  2028       NA    Prognoze 11.64919 10.371 12.928</code></pre>
+</div>
+</div>
+</section>
+<section id="prognozes-veidošana-1" class="level1">
+<h1>Prognozes veidošana</h1>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="LRKPM_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Lineārā modeļa formula: y = -823.60 + 0.41 * x</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R-squared: 0.956</code></pre>
+</div>
+</div>
+
+
 </section>
 
 </main> <!-- /main -->
