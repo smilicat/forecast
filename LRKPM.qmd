@@ -3,3 +3,68 @@ title: "LRKPM"
 ---
 
 ## Patstāvīgais darbs par laika rindu klasiskiem prognozēšanas modeļiem
+
+```{r}
+#| warning: false
+#| echo: false
+#| error: false
+# Ielādēt nepieciešamās bibliotēkas (nokomentēts, lai norādītu nepieciešamo)
+library(httr)
+library(jsonlite)
+library(forecast)
+library(tidyverse)
+
+# Izveidojiet datu rāmi ar sākotnējiem datiem
+darba_izmaksas <- data.frame(
+  Gads = 2005:2023, # Gadu diapazons
+  Izmaksas = c(2.19, 2.75, 3.53, 4.38, 4.28, 4.14, 4.34, 4.45, 4.78, 5.23, 5.83, 6.23, 6.65, 7.58, 8.11, 8.60, 8.75, 9.48, 10.48)
+)
+
+# Nodrošināt, ka kolonnas ir skaitliskas
+darba_izmaksas$Gads <- as.numeric(darba_izmaksas$Gads)
+```
+
+### Sākotnējie dati 
+
+[*Vienas stundas darbaspēka izmaksas pa darbības veidiem (eiro) 2005 - 2023*](https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__EMP__DI__DIS/DIS010/)
+
+```{r}
+#| echo: false
+tibble(darba_izmaksas)
+```
+
+Trendu izpēte
+
+```{r}
+# Lineārais modelis
+lin_mod <- lm(Izmaksas ~ Gads, data = darba_izmaksas)
+
+# Logaritmiskais modelis
+log_mod <- lm(Izmaksas ~ log(Gads), data = darba_izmaksas)
+
+# Eksponenciālais modelis
+exp_mod <- lm(log(Izmaksas) ~ Gads, data = darba_izmaksas)
+
+# Jaudas modelis
+power_mod <- lm(log(Izmaksas) ~ log(Gads), data = darba_izmaksas)
+
+# Kustīgais vidējais (Moving Average)
+darba_izmaksas$Moving_Avg <- zoo::rollmean(darba_izmaksas$Izmaksas, k = 3, fill = NA)
+
+# Tabula ar modeļiem un R^2 vērtībām
+trend_table <- data.frame(
+  Modelis = c("Lineārais", "Logaritmiskais", "Eksponenciālais", "Jaudas"),
+  Formula = c(
+    paste0("y = ", round(coef(lin_mod)[1], 2), " + ", round(coef(lin_mod)[2], 2), "*x"),
+    paste0("y = ", round(coef(log_mod)[1], 2), " + ", round(coef(log_mod)[2], 2), "*log(x)"),
+    paste0("y = exp(", round(coef(exp_mod)[1], 2), " + ", round(coef(exp_mod)[2], 2), "*x)"),
+    paste0("y = exp(", round(coef(power_mod)[1], 2), " + ", round(coef(power_mod)[2], 2), "*log(x))")
+  ),
+  R2 = c(summary(lin_mod)$r.squared, 
+         summary(log_mod)$r.squared, 
+         summary(exp_mod)$r.squared, 
+         summary(power_mod)$r.squared)
+)
+
+print(trend_table)
+```
