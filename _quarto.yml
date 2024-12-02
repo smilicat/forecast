@@ -3,12 +3,12 @@ project:
   output-dir: docs
 
 website:
-  title: "forecast"
+  title: "RISEBA Prognozēšanas metodes"
   navbar:
     left:
       - href: index.qmd
         text: Home
-      - about.qmd
+      - LRKPM.qmd
 
 format:
   html:

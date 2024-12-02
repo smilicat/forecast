@@ -1,0 +1,4 @@
+---
+title: "LRKPM"
+---
+## Patstāvīgais darbs par laika rindu klasiskiem prognozēšanas modeļiem
