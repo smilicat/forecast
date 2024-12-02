@@ -1,5 +1,5 @@
 ---
-title: "forecast"
+title: "Prognozēšanas metodes"
 ---
 
 This is a Quarto website.
