@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "forecast",
     "section": "",
-    "text": "This is a Quarto website.\nTo learn more about Quarto websites visit https://quarto.org/docs/websites.\n\n100+100\n\n[1] 200"
+    "text": "This is a Quarto website.\nTo learn more about Quarto websites visit https://quarto.org/docs/websites.\n\n100+100+100\n\n[1] 300"
   },
   {
     "objectID": "about.html",
