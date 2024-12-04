@@ -1,18 +1,22 @@
 ---
-title: "LRKPM"
+title: "Laika rindas klasisaās prognozēšanas metodes"
 ---
 
-## Patstāvīgais darbs par laika rindu klasiskiem prognozēšanas modeļiem
+# Patstāvīgais darbs par laika rindu klasiskiem prognozēšanas modeļiem
 
 ```{r}
 #| warning: false
 #| echo: false
 #| error: false
+
 # Ielādēt nepieciešamās bibliotēkas (nokomentēts, lai norādītu nepieciešamo)
 
 library(forecast)
 library(tidyverse)
 library(ggrepel) 
+library(dygraphs)
+library(tibble)
+library(knitr)
 
 # Izveidojiet datu rāmi ar sākotnējiem datiem
 darba_izmaksas <- data.frame(
@@ -27,20 +31,33 @@ darba_izmaksas <- data.frame(
 
 # Nodrošināt, ka kolonnas ir skaitliskas
 darba_izmaksas$Gads <- as.numeric(darba_izmaksas$Gads)
+sakuma_dati<- tibble(darba_izmaksas)
 ```
 
-### Sākotnējie dati
+## Sākotnējie dati
 
 [*Vienas stundas darbaspēka izmaksas pa darbības veidiem (eiro) 2005 - 2023*](https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__EMP__DI__DIS/DIS010/)
 
 ```{r}
+#| label: fig-margin
+#| fig-cap: "Sākotnējie dati"
+#| layout: [15,-2, 83]
+#| message: false
 #| echo: false
-tibble(darba_izmaksas[, c("Gads", "Izmaksas")])
+
+
+
+kable(sakuma_dati[c("Gads", "Izmaksas")], col.names = c("Gads", "Izmaksas"), align = "l")
+ggplot(darba_izmaksas, aes(x = Gads)) +
+  geom_line(aes(y = Izmaksas, color = "Vēsturiskie dati"), linewidth = 1)
 ```
 
-Trendu izpēte
+## Trendu izpēte
 
 ```{r}
+#| warning: false
+#| echo: false
+#| error: false
 # Lineārais modelis
 lin_mod <- lm(Izmaksas ~ Gads, data = darba_izmaksas)
 
@@ -69,13 +86,26 @@ trend_table <- data.frame(
 )
 # Noapaļo R2 
 trend_table$R2 <- round(trend_table$R2, 2)
+trend_table_tibble <- tibble(trend_table)
 
-tibble(trend_table)
+```
+
+```{r}
+#| message: false
+#| echo: false
+
+
+# Display Table (Optional Enhancement)
+kable(trend_table_tibble, col.names = c("Modelis", "Formula", "R²"), align = "l")
+
 ```
 
 ## Prognozes veidošana
 
 ```{r}
+#| warning: false
+#| echo: false
+#| error: false
 # Prognoze nākamajiem 5 gadiem ar ticamības intervāliem
 forecast_years <- data.frame(
   Gads = 2024:2028,
@@ -94,10 +124,16 @@ forecast_years$UCL <- round(forecast_result[, "upr"], 3)
 pilns_datu_rāmis <- rbind(darba_izmaksas, forecast_years)
 
 # Izvadīt pilno datu rāmi
-print(pilns_datu_rāmis)
+pilns_datu_rāmis_tibble <- tibble(pilns_datu_rāmis)
 ```
 
-# Prognozes veidošana 
+```{r}
+#| message: false
+#| echo: false
+kable(pilns_datu_rāmis_tibble, col.names = c("Gads", "Izmaksas", "Datu tips", "Prognoze", "LCL", "UCL"), align = "l")
+```
+
+## Prognozes vizualizēšana
 
 ```{r}
 #| warning: false

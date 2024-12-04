@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>LRKPM – RISEBA Prognozēšanas metodes</title>
+<title>Laika rindas klasisaās prognozēšanas metodes – RISEBA Prognozēšanas metodes</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -19,40 +19,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -128,7 +94,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>  
   <li class="nav-item">
     <a class="nav-link active" href="./LRKPM.html" aria-current="page"> 
-<span class="menu-text">LRKPM</span></a>
+<span class="menu-text">Laika rindas klasisaās prognozēšanas metodes</span></a>
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
@@ -149,9 +115,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#patstāvīgais-darbs-par-laika-rindu-klasiskiem-prognozēšanas-modeļiem" id="toc-patstāvīgais-darbs-par-laika-rindu-klasiskiem-prognozēšanas-modeļiem" class="nav-link active" data-scroll-target="#patstāvīgais-darbs-par-laika-rindu-klasiskiem-prognozēšanas-modeļiem">Patstāvīgais darbs par laika rindu klasiskiem prognozēšanas modeļiem</a>
   <ul class="collapse">
   <li><a href="#sākotnējie-dati" id="toc-sākotnējie-dati" class="nav-link" data-scroll-target="#sākotnējie-dati">Sākotnējie dati</a></li>
-  </ul></li>
+  <li><a href="#trendu-izpēte" id="toc-trendu-izpēte" class="nav-link" data-scroll-target="#trendu-izpēte">Trendu izpēte</a></li>
   <li><a href="#prognozes-veidošana" id="toc-prognozes-veidošana" class="nav-link" data-scroll-target="#prognozes-veidošana">Prognozes veidošana</a></li>
-  <li><a href="#prognozes-veidošana-1" id="toc-prognozes-veidošana-1" class="nav-link" data-scroll-target="#prognozes-veidošana-1">Prognozes veidošana</a></li>
+  <li><a href="#prognozes-vizualizēšana" id="toc-prognozes-vizualizēšana" class="nav-link" data-scroll-target="#prognozes-vizualizēšana">Prognozes vizualizēšana</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -160,7 +127,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">LRKPM</h1>
+<h1 class="title">Laika rindas klasisaās prognozēšanas metodes</h1>
 </div>
 
 
@@ -177,139 +144,389 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="patstāvīgais-darbs-par-laika-rindu-klasiskiem-prognozēšanas-modeļiem" class="level2">
-<h2 class="anchored" data-anchor-id="patstāvīgais-darbs-par-laika-rindu-klasiskiem-prognozēšanas-modeļiem">Patstāvīgais darbs par laika rindu klasiskiem prognozēšanas modeļiem</h2>
-<section id="sākotnējie-dati" class="level3">
-<h3 class="anchored" data-anchor-id="sākotnējie-dati">Sākotnējie dati</h3>
+<section id="patstāvīgais-darbs-par-laika-rindu-klasiskiem-prognozēšanas-modeļiem" class="level1">
+<h1>Patstāvīgais darbs par laika rindu klasiskiem prognozēšanas modeļiem</h1>
+<section id="sākotnējie-dati" class="level2">
+<h2 class="anchored" data-anchor-id="sākotnējie-dati">Sākotnējie dati</h2>
 <p><a href="https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__EMP__DI__DIS/DIS010/"><em>Vienas stundas darbaspēka izmaksas pa darbības veidiem (eiro) 2005 - 2023</em></a></p>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 19 × 2
-    Gads Izmaksas
-   &lt;dbl&gt;    &lt;dbl&gt;
- 1  2005     2.19
- 2  2006     2.75
- 3  2007     3.53
- 4  2008     4.38
- 5  2009     4.28
- 6  2010     4.14
- 7  2011     4.34
- 8  2012     4.45
- 9  2013     4.78
-10  2014     5.23
-11  2015     5.83
-12  2016     6.23
-13  2017     6.65
-14  2018     7.58
-15  2019     8.11
-16  2020     8.6 
-17  2021     8.75
-18  2022     9.48
-19  2023    10.5 </code></pre>
+<div>
+
+</div>
+<div class="cell quarto-layout-panel" data-layout="[15,-2,83]">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 15.0%;justify-content: center;">
+<div id="fig-margin-1" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-margin-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Gads</th>
+<th style="text-align: left;">Izmaksas</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">2005</td>
+<td style="text-align: left;">2.19</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2006</td>
+<td style="text-align: left;">2.75</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2007</td>
+<td style="text-align: left;">3.53</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2008</td>
+<td style="text-align: left;">4.38</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2009</td>
+<td style="text-align: left;">4.28</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2010</td>
+<td style="text-align: left;">4.14</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2011</td>
+<td style="text-align: left;">4.34</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2012</td>
+<td style="text-align: left;">4.45</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2013</td>
+<td style="text-align: left;">4.78</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2014</td>
+<td style="text-align: left;">5.23</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2015</td>
+<td style="text-align: left;">5.83</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2016</td>
+<td style="text-align: left;">6.23</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2017</td>
+<td style="text-align: left;">6.65</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2018</td>
+<td style="text-align: left;">7.58</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2019</td>
+<td style="text-align: left;">8.11</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2020</td>
+<td style="text-align: left;">8.60</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2021</td>
+<td style="text-align: left;">8.75</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2022</td>
+<td style="text-align: left;">9.48</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2023</td>
+<td style="text-align: left;">10.48</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-margin-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Sākotnējie dati
+</figcaption>
+</figure>
 </div>
 </div>
-<p>Trendu izpēte</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Lineārais modelis</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>lin_mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(Izmaksas <span class="sc">~</span> Gads, <span class="at">data =</span> darba_izmaksas)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Logaritmiskais modelis</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>log_mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(Izmaksas <span class="sc">~</span> <span class="fu">log</span>(Gads), <span class="at">data =</span> darba_izmaksas)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Eksponenciālais modelis</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>exp_mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(Izmaksas) <span class="sc">~</span> Gads, <span class="at">data =</span> darba_izmaksas)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Pakāpes modelis</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>power_mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(Izmaksas) <span class="sc">~</span> <span class="fu">log</span>(Gads), <span class="at">data =</span> darba_izmaksas)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Tabula ar modeļiem un R^2 vērtībām</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>trend_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">Modelis =</span> <span class="fu">c</span>(<span class="st">"Lineārais"</span>, <span class="st">"Logaritmiskais"</span>, <span class="st">"Eksponenciālais"</span>, <span class="st">"Pakāpes"</span>),</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">Formula =</span> <span class="fu">c</span>(</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(lin_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(lin_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*x"</span>),</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(log_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(log_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*log(x)"</span>),</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = exp("</span>, <span class="fu">round</span>(<span class="fu">coef</span>(exp_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(exp_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*x)"</span>),</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"y = exp("</span>, <span class="fu">round</span>(<span class="fu">coef</span>(power_mod)[<span class="dv">1</span>], <span class="dv">2</span>), <span class="st">" + "</span>, <span class="fu">round</span>(<span class="fu">coef</span>(power_mod)[<span class="dv">2</span>], <span class="dv">2</span>), <span class="st">"*log(x))"</span>)</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">R2 =</span> <span class="fu">c</span>(<span class="fu">summary</span>(lin_mod)<span class="sc">$</span>r.squared, </span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summary</span>(log_mod)<span class="sc">$</span>r.squared, </span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summary</span>(exp_mod)<span class="sc">$</span>r.squared, </span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summary</span>(power_mod)<span class="sc">$</span>r.squared)</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Noapaļo R2 </span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>trend_table<span class="sc">$</span>R2 <span class="ot">&lt;-</span> <span class="fu">round</span>(trend_table<span class="sc">$</span>R2, <span class="dv">2</span>)</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(trend_table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 4 × 3
-  Modelis         Formula                              R2
-  &lt;chr&gt;           &lt;chr&gt;                             &lt;dbl&gt;
-1 Lineārais       y = -823.6 + 0.41*x                0.96
-2 Logaritmiskais  y = -6303.54 + 829.33*log(x)       0.96
-3 Eksponenciālais y = exp(-147.28 + 0.07*x)          0.95
-4 Pakāpes         y = exp(-1131.69 + 148.97*log(x))  0.95</code></pre>
+<div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 2.0%;justify-content: flex-start;">
+<p>&nbsp;</p>
+</div>
+<div class="cell-output-display quarto-layout-cell" style="flex-basis: 83.0%;justify-content: flex-start;">
+<div id="fig-margin-2" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-margin-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="LRKPM_files/figure-html/fig-margin-1.png" class="img-fluid figure-img" width="672">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-margin-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Sākotnējie dati
+</figcaption>
+</figure>
+</div>
+</div>
 </div>
 </div>
 </section>
+<section id="trendu-izpēte" class="level2">
+<h2 class="anchored" data-anchor-id="trendu-izpēte">Trendu izpēte</h2>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Modelis</th>
+<th style="text-align: left;">Formula</th>
+<th style="text-align: left;">R²</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Lineārais</td>
+<td style="text-align: left;">y = -823.6 + 0.41*x</td>
+<td style="text-align: left;">0.96</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Logaritmiskais</td>
+<td style="text-align: left;">y = -6303.54 + 829.33*log(x)</td>
+<td style="text-align: left;">0.96</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Eksponenciālais</td>
+<td style="text-align: left;">y = exp(-147.28 + 0.07*x)</td>
+<td style="text-align: left;">0.95</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pakāpes</td>
+<td style="text-align: left;">y = exp(-1131.69 + 148.97*log(x))</td>
+<td style="text-align: left;">0.95</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </section>
 <section id="prognozes-veidošana" class="level2">
 <h2 class="anchored" data-anchor-id="prognozes-veidošana">Prognozes veidošana</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prognoze nākamajiem 5 gadiem ar ticamības intervāliem</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>forecast_years <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Gads =</span> <span class="dv">2024</span><span class="sc">:</span><span class="dv">2028</span>,</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Prognoze =</span> <span class="fu">predict</span>(lin_mod, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">Gads =</span> <span class="dv">2024</span><span class="sc">:</span><span class="dv">2028</span>)),</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Izmaksas =</span> <span class="cn">NA</span>,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">Datu_tips =</span> <span class="st">"Prognoze"</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Papildināt ar ticamības intervāliem</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>forecast_result <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">predict</span>(lin_mod, <span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">Gads =</span> <span class="dv">2024</span><span class="sc">:</span><span class="dv">2028</span>), <span class="at">interval =</span> <span class="st">"prediction"</span>, <span class="at">level =</span> <span class="fl">0.95</span>), <span class="dv">3</span>)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>forecast_years<span class="sc">$</span>LCL <span class="ot">&lt;-</span> <span class="fu">round</span>(forecast_result[, <span class="st">"lwr"</span>], <span class="dv">3</span>)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>forecast_years<span class="sc">$</span>UCL <span class="ot">&lt;-</span> <span class="fu">round</span>(forecast_result[, <span class="st">"upr"</span>], <span class="dv">3</span>)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Apvienot sākotnējos datus ar prognozi</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>pilns_datu_rāmis <span class="ot">&lt;-</span> <span class="fu">rbind</span>(darba_izmaksas, forecast_years)</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Izvadīt pilno datu rāmi</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(pilns_datu_rāmis)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>    Gads Izmaksas   Datu_tips Prognoze    LCL    UCL
-1   2005     2.19 Vēsturiskie       NA     NA     NA
-2   2006     2.75 Vēsturiskie       NA     NA     NA
-3   2007     3.53 Vēsturiskie       NA     NA     NA
-4   2008     4.38 Vēsturiskie       NA     NA     NA
-5   2009     4.28 Vēsturiskie       NA     NA     NA
-6   2010     4.14 Vēsturiskie       NA     NA     NA
-7   2011     4.34 Vēsturiskie       NA     NA     NA
-8   2012     4.45 Vēsturiskie       NA     NA     NA
-9   2013     4.78 Vēsturiskie       NA     NA     NA
-10  2014     5.23 Vēsturiskie       NA     NA     NA
-11  2015     5.83 Vēsturiskie       NA     NA     NA
-12  2016     6.23 Vēsturiskie       NA     NA     NA
-13  2017     6.65 Vēsturiskie       NA     NA     NA
-14  2018     7.58 Vēsturiskie       NA     NA     NA
-15  2019     8.11 Vēsturiskie       NA     NA     NA
-16  2020     8.60 Vēsturiskie       NA     NA     NA
-17  2021     8.75 Vēsturiskie       NA     NA     NA
-18  2022     9.48 Vēsturiskie       NA     NA     NA
-19  2023    10.48 Vēsturiskie       NA     NA     NA
-110 2024       NA    Prognoze 10.00175  8.803 11.201
-21  2025       NA    Prognoze 10.41361  9.197 11.630
-31  2026       NA    Prognoze 10.82547  9.589 12.061
-41  2027       NA    Prognoze 11.23733  9.981 12.494
-51  2028       NA    Prognoze 11.64919 10.371 12.928</code></pre>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Gads</th>
+<th style="text-align: left;">Izmaksas</th>
+<th style="text-align: left;">Datu tips</th>
+<th style="text-align: left;">Prognoze</th>
+<th style="text-align: left;">LCL</th>
+<th style="text-align: left;">UCL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">2005</td>
+<td style="text-align: left;">2.19</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2006</td>
+<td style="text-align: left;">2.75</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2007</td>
+<td style="text-align: left;">3.53</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2008</td>
+<td style="text-align: left;">4.38</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2009</td>
+<td style="text-align: left;">4.28</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2010</td>
+<td style="text-align: left;">4.14</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2011</td>
+<td style="text-align: left;">4.34</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2012</td>
+<td style="text-align: left;">4.45</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2013</td>
+<td style="text-align: left;">4.78</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2014</td>
+<td style="text-align: left;">5.23</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2015</td>
+<td style="text-align: left;">5.83</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2016</td>
+<td style="text-align: left;">6.23</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2017</td>
+<td style="text-align: left;">6.65</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2018</td>
+<td style="text-align: left;">7.58</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2019</td>
+<td style="text-align: left;">8.11</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2020</td>
+<td style="text-align: left;">8.60</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2021</td>
+<td style="text-align: left;">8.75</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2022</td>
+<td style="text-align: left;">9.48</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2023</td>
+<td style="text-align: left;">10.48</td>
+<td style="text-align: left;">Vēsturiskie</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2024</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">Prognoze</td>
+<td style="text-align: left;">10.00175</td>
+<td style="text-align: left;">8.803</td>
+<td style="text-align: left;">11.201</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2025</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">Prognoze</td>
+<td style="text-align: left;">10.41361</td>
+<td style="text-align: left;">9.197</td>
+<td style="text-align: left;">11.630</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2026</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">Prognoze</td>
+<td style="text-align: left;">10.82547</td>
+<td style="text-align: left;">9.589</td>
+<td style="text-align: left;">12.061</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2027</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">Prognoze</td>
+<td style="text-align: left;">11.23733</td>
+<td style="text-align: left;">9.981</td>
+<td style="text-align: left;">12.494</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2028</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">Prognoze</td>
+<td style="text-align: left;">11.64919</td>
+<td style="text-align: left;">10.371</td>
+<td style="text-align: left;">12.928</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </section>
-<section id="prognozes-veidošana-1" class="level1">
-<h1>Prognozes veidošana</h1>
+<section id="prognozes-vizualizēšana" class="level2">
+<h2 class="anchored" data-anchor-id="prognozes-vizualizēšana">Prognozes vizualizēšana</h2>
 <div class="cell">
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="LRKPM_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="LRKPM_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -322,6 +539,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
