@@ -1,8 +1,10 @@
 ---
-title: "Laika rindas klasisaās prognozēšanas metodes"
+title: "LR klasiskās prognozēšanas metodes"
 ---
 
 # Patstāvīgais darbs par laika rindu klasiskiem prognozēšanas modeļiem
+
+**Autors : Kirils Volobujevs**
 
 ```{r}
 #| warning: false
@@ -39,9 +41,7 @@ sakuma_dati<- tibble(darba_izmaksas)
 [*Vienas stundas darbaspēka izmaksas pa darbības veidiem (eiro) 2005 - 2023*](https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__EMP__DI__DIS/DIS010/)
 
 ```{r}
-#| label: fig-margin
-#| fig-cap: "Sākotnējie dati"
-#| layout: [15,-2, 83]
+#| layout: [20,-5, 75]
 #| message: false
 #| echo: false
 
@@ -49,10 +49,17 @@ sakuma_dati<- tibble(darba_izmaksas)
 
 kable(sakuma_dati[c("Gads", "Izmaksas")], col.names = c("Gads", "Izmaksas"), align = "l")
 ggplot(darba_izmaksas, aes(x = Gads)) +
+  labs(
+    title = "Darbaspēka izmaksu vēsturiskie dati",
+    x = "Gads", 
+    y = "Izmaksas (eiro/st)", 
+  ) +
   geom_line(aes(y = Izmaksas, color = "Vēsturiskie dati"), linewidth = 1)
 ```
 
 ## Trendu izpēte
+
+Pārbaudot visus lineārās regresijas modeļus, ir jāsaprot, cik labi modelis atbilst datiem – jo lielāks ir determinācijas koeficients (R²), jo labāk regresijas modelis atbilst tālākajai analīzei.
 
 ```{r}
 #| warning: false
@@ -100,7 +107,11 @@ kable(trend_table_tibble, col.names = c("Modelis", "Formula", "R²"), align = "l
 
 ```
 
+Kā mēs neredzam būtisku atšķirību starp lineārā un logaritmiskā modeļa determinācijas koeficientiem, es izvēlējos lineāro modeli tālākai prognozēšanai.
+
 ## Prognozes veidošana
+
+Prognozēšanas intervāls ir konservatīvi - 5 gadi.
 
 ```{r}
 #| warning: false
@@ -191,4 +202,241 @@ ggplot(pilns_datu_rāmis, aes(x = Gads)) +
 # Izvadīt papildus informāciju konsoles izvadē
 cat(sprintf("Lineārā modeļa formula: y = %.2f + %.2f * x\n", intercept, slope))
 cat(sprintf("R-squared: %.3f\n", summary(lin_mod)$r.squared))
+```
+
+## Dinamiskā vizualizācija
+
+```{r}
+#| warning: false
+#| echo: false
+#| error: false
+library(dygraphs)
+library(xts)
+
+time_series_data <- xts(
+  pilns_datu_rāmis[, c("Izmaksas", "Prognoze", "LCL", "UCL")],
+  order.by = as.Date(paste(pilns_datu_rāmis$Gads, "-01-01", sep = ""))  # Ensure Gads is treated as a Date
+)
+
+
+```
+
+```{r}
+#| warning: false
+#| echo: false
+#| error: false
+#| fig-width: 10
+#| fig-height: 6
+#| fig-responsive: false
+
+# Create the dygraph
+(dygraph(time_series_data, main = "Darbaspēka izmaksu vēsturiskie dati un prognoze") %>%
+  # Add shaded areas for confidence intervals
+  dySeries("LCL", label = "LCL", color = "blue", strokeWidth = 1) %>%
+  dySeries("Izmaksas", label = "Vēsturiskie dati", color = "#1F77B4") %>%
+  dySeries("UCL", label = "UCL", color = "blue", strokeWidth = 1) %>%
+  
+  # Add forecast data
+  dySeries("Prognoze", label = "Prognoze", color = "#FF7F0E", strokePattern = "dashed") %>%
+  
+  # Customize axis labels
+  dyAxis("x", label = "Gads") %>%
+  dyAxis("y", label = "Izmaksas (eiro/st)") %>%
+  
+  # Add legend and custom styles
+  dyLegend(show = "always", hideOnMouseOut = FALSE) %>%
+  dyOptions(
+    fillGraph = FALSE,
+    drawGrid = TRUE,
+    rightGap = 1
+  ))
+```
+
+### Pirmskods
+
+```{r}
+#| warning: false
+#| output: false
+# Patstāvīgais darbs par laika rindu klasiskiem prognozēšanas modeļiem
+# Ielādēt nepieciešamās bibliotēkas (nokomentēts, lai norādītu nepieciešamo)
+
+library(forecast)
+library(tidyverse)
+library(ggrepel) 
+library(dygraphs)
+library(tibble)
+library(knitr)
+library(xts)
+
+# Izveidojiet datu rāmi ar sākotnējiem datiem
+darba_izmaksas <- data.frame(
+  Gads = 2005:2023, # Gadu diapazons
+  Izmaksas = c(2.19, 2.75, 3.53, 4.38, 4.28, 4.14, 4.34, 4.45, 4.78,
+               5.23, 5.83, 6.23, 6.65, 7.58, 8.11, 8.60, 8.75, 9.48, 10.48),
+  Datu_tips = "Vēsturiskie",
+  Prognoze = NA,
+  LCL = NA,
+  UCL = NA
+)
+
+
+# Nodrošināt, ka kolonnas ir skaitliskas
+darba_izmaksas$Gads <- as.numeric(darba_izmaksas$Gads)
+sakuma_dati<- tibble(darba_izmaksas)
+
+
+## Sākotnējie dati
+#(https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__EMP__DI__DIS/DIS010/)
+
+# Sākotnējo datu vizualizācija
+kable(sakuma_dati[c("Gads", "Izmaksas")], col.names = c("Gads", "Izmaksas"), align = "l")
+ggplot(darba_izmaksas, aes(x = Gads)) +
+  labs(
+    title = "Darbaspēka izmaksu vēsturiskie dati",
+    x = "Gads", 
+    y = "Izmaksas (eiro/st)", 
+  ) +
+  geom_line(aes(y = Izmaksas, color = "Vēsturiskie dati"), linewidth = 1)
+
+## Trendu izpēte
+
+# Lineārais modelis
+lin_mod <- lm(Izmaksas ~ Gads, data = darba_izmaksas)
+
+# Logaritmiskais modelis
+log_mod <- lm(Izmaksas ~ log(Gads), data = darba_izmaksas)
+
+# Eksponenciālais modelis
+exp_mod <- lm(log(Izmaksas) ~ Gads, data = darba_izmaksas)
+
+# Pakāpes modelis
+power_mod <- lm(log(Izmaksas) ~ log(Gads), data = darba_izmaksas)
+
+# Trendu attēlošanas Tabula ar modeļiem un R^2 vērtībām
+trend_table <- data.frame(
+  Modelis = c("Lineārais", "Logaritmiskais", "Eksponenciālais", "Pakāpes"),
+  Formula = c(
+    paste0("y = ", round(coef(lin_mod)[1], 2), " + ", round(coef(lin_mod)[2], 2), "*x"),
+    paste0("y = ", round(coef(log_mod)[1], 2), " + ", round(coef(log_mod)[2], 2), "*log(x)"),
+    paste0("y = exp(", round(coef(exp_mod)[1], 2), " + ", round(coef(exp_mod)[2], 2), "*x)"),
+    paste0("y = exp(", round(coef(power_mod)[1], 2), " + ", round(coef(power_mod)[2], 2), "*log(x))")
+  ),
+  R2 = c(summary(lin_mod)$r.squared, 
+         summary(log_mod)$r.squared, 
+         summary(exp_mod)$r.squared, 
+         summary(power_mod)$r.squared)
+)
+# Noapaļo R2 
+trend_table$R2 <- round(trend_table$R2, 2)
+
+# tabulas attēlošana
+trend_table_tibble <- tibble(trend_table)
+kable(trend_table_tibble, col.names = c("Modelis", "Formula", "R²"), align = "l")
+
+
+## Prognozes veidošana
+# Prognoze nākamajiem 5 gadiem ar ticamības intervāliem
+# Izveidojam jaunu tabulu, priekš prognozes
+forecast_years <- data.frame(
+  Gads = 2024:2028,
+  Prognoze = predict(lin_mod, newdata = data.frame(Gads = 2024:2028)),
+  Izmaksas = NA,
+  Datu_tips = "Prognoze"
+)
+
+# Papildināt ar ticamības intervāliem
+forecast_result <- round(predict(lin_mod, newdata = data.frame(Gads = 2024:2028), interval = "prediction", level = 0.95), 3)
+
+forecast_years$LCL <- round(forecast_result[, "lwr"], 3)
+forecast_years$UCL <- round(forecast_result[, "upr"], 3)
+
+# Apvienot sākotnējos datus ar prognozi
+pilns_datu_rāmis <- rbind(darba_izmaksas, forecast_years)
+
+# Izvadīt pilno datu rāmi
+pilns_datu_rāmis_tibble <- tibble(pilns_datu_rāmis)
+kable(pilns_datu_rāmis_tibble, col.names = c("Gads", "Izmaksas", "Datu tips", "Prognoze", "LCL", "UCL"), align = "l")
+
+## Prognozes vizualizēšana
+
+# Iegūt lineārā modeļa koeficientus
+intercept <- coef(lin_mod)[1]
+slope <- coef(lin_mod)[2]
+
+# Vizualizācija ar ggplot2
+ggplot(pilns_datu_rāmis, aes(x = Gads)) +
+  # Ticamības intervāli
+  geom_ribbon(aes(ymin = LCL, ymax = UCL), alpha = 0.2, fill = "blue") +
+  
+  # Vēsturiskie dati līnija
+  geom_line(aes(y = Izmaksas, color = "Vēsturiskie dati"), size = 1) +
+  geom_point(aes(y = Izmaksas, color = "Vēsturiskie dati"), size = 2, shape = 16) +
+  
+  # Prognozes līnija
+  geom_line(aes(y = Prognoze, color = "Prognoze"), linetype = "dashed", size = 1) +
+  geom_point(aes(y = Prognoze, color = "Prognoze"), size = 2, shape = 17) +
+  
+  
+  # Līnijas stilizācija
+  scale_color_manual(
+    values = c("Vēsturiskie dati" = "#1F77B4", "Prognoze" = "#FF7F0E"),
+    name = "Datu tips"
+  ) +
+  
+  # Virsraksts un etiķetes
+  labs(
+    title = "Darbaspēka izmaksu vēsturiskie dati un prognoze",
+    subtitle = bquote(bold("Lineārā modeļa formula:") ~ italic(y) == .(round(intercept, 2)) + .(round(slope, 2)) * italic(x)),
+    x = "Gads", 
+    y = "Izmaksas (eiro)", 
+    caption = bquote(bold("R2:") ~ .(round(summary(lin_mod)$r.squared, 3)))
+  ) +
+  
+  
+  # Tēma
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    panel.grid.minor = element_line(color = "lightgray", linetype = "dotted")
+  ) +
+  # Y ass sadalījums
+  scale_y_continuous(breaks = seq(1, 12, by = 1)) +
+  # X ass sadalījums
+  scale_x_continuous(breaks = seq(2005, 2028, by = 3))
+
+# Izvadīt papildus informāciju konsoles izvadē
+cat(sprintf("Lineārā modeļa formula: y = %.2f + %.2f * x\n", intercept, slope))
+cat(sprintf("R-squared: %.3f\n", summary(lin_mod)$r.squared))
+
+
+## Dinamiskā vizualizācija
+
+time_series_data <- xts(
+  pilns_datu_rāmis[, c("Izmaksas", "Prognoze", "LCL", "UCL")],
+  order.by = as.Date(paste(pilns_datu_rāmis$Gads, "-01-01", sep = ""))  # Ensure Gads is treated as a Date
+)
+
+# izveidojam interaktīvu grafiku
+dygraph(time_series_data, main = "Darbaspēka izmaksu vēsturiskie dati un prognoze") %>%
+  dySeries("LCL", label = "LCL", color = "blue", strokeWidth = 1) %>%
+  dySeries("Izmaksas", label = "Vēsturiskie dati", color = "#1F77B4") %>%
+  dySeries("UCL", label = "UCL", color = "blue", strokeWidth = 1) %>%
+  
+  # pievienojam prognozes datus
+  dySeries("Prognoze", label = "Prognoze", color = "#FF7F0E", strokePattern = "dashed") %>%
+  
+  # izmanām ašu informāciju
+  dyAxis("x", label = "Gads") %>%
+  dyAxis("y", label = "Izmaksas (eiro/st)") %>%
+  
+  # leģendas stilizācija
+  dyLegend(show = "always", hideOnMouseOut = FALSE) %>%
+  dyOptions(
+    fillGraph = FALSE,
+    drawGrid = TRUE
+  )
+
+
 ```
