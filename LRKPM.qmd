@@ -55,6 +55,8 @@ ggplot(darba_izmaksas, aes(x = Gads)) +
     y = "Izmaksas (eiro/st)", 
   ) +
   geom_line(aes(y = Izmaksas, color = "Vēsturiskie dati"), linewidth = 1)
+paste0("Vidējā alga : ",round(mean(sakuma_dati$Izmaksas),3)," eiro/st")
+paste0("Standartnovirze: ",round(sd(sakuma_dati$Izmaksas),3))
 ```
 
 ## Trendu izpēte
@@ -141,7 +143,9 @@ pilns_datu_rāmis_tibble <- tibble(pilns_datu_rāmis)
 ```{r}
 #| message: false
 #| echo: false
+#| warning: false
 kable(pilns_datu_rāmis_tibble, col.names = c("Gads", "Izmaksas", "Datu tips", "Prognoze", "LCL", "UCL"), align = "l")
+paste0("MAPE: ",round((mean(abs((sakuma_dati$Izmaksas - forecast_years$Prognoze) / sakuma_dati$Izmaksas)) * 100),6))
 ```
 
 ## Prognozes vizualizēšana
@@ -252,7 +256,29 @@ time_series_data <- xts(
   ))
 ```
 
-### Pirmskods
+# Secinājumi
+
+Analizējot datus par darbsapēka izmaksām pārtikas produktu ražošanā no 2005. līdz 2023. gadam, var izdarīt šādus secinājumus:
+
+1.  **Vispārējais pieaugums:** Darbaspēka izmaksas pārtikas produktu ražošanā ir pieredzējušas pakāpenisku pieaugumu visos gados, no 2,19 eiro 2005. gadā līdz 10,48 eiro 2023. gadā. Tas norāda uz tendenci pieaugt darbaspēka izmaksām pārtikas nozarē.
+
+2.  **Pārsvarā stabili pieauguma tempi**: Pieauguma temps ir bijis samērā nemainīgs visā periodā, ar izņēmumu dažos gados, kad pieaugums bija mazāk izteikts. Piemēram, 2009. un 2010. gadā pieaugums bija mazāks (no 4,28 uz 4,14 eiro, un no 4,14 uz 4,34 eiro), kas var būt saistīts ar ekonomiskās krīzes ietekmi.
+
+3.  **Straujākais pieaugums**: Straujākais pieaugums ir novērots pēdējās desmitgades laikā, it īpaši no 2018. līdz 2023. gadam. No 7,58 eiro 2018. gadā līdz 10,48 eiro 2023. gadā darbsapēka izmaksas ir pieaugušas par vairāk nekā 2 eiro, kas varētu būt saistīts ar darba tirgus izmaiņām, inflāciju un citām ekonomiskām tendencēm.
+
+4.  **Iespējamie faktori, kas ietekmējuši pieaugumu**: Pieaugums varētu būt saistīts ar dažādiem faktoriem, piemēram:
+
+    1.  Inflācija un vispārējās cenu izmaiņas ekonomikā.
+
+    2.  Augošas prasības pēc kvalificēta darbaspēka pārtikas ražošanas nozarē.
+
+    3.  Arī valdības politika, piemēram, minimālās algas paaugstināšana vai sociālo nodokļu izmaiņas.
+
+5.  **Prognozējamās tendences**: Ja pieaugošais pieaugums turpināsies līdzīgi arī nākotnē, iespējams, ka darbsapēka izmaksas pārtikas ražošanā turpinās palielināties, lai gan pieauguma temps var samazināties atkarībā no ekonomikas situācijas.
+
+Kopumā, šie dati liecina par stabilu un nepārtrauktu darbsapēka izmaksu pieaugumu pārtikas produktu ražošanā, kas ir svarīgs faktors ekonomiskajai analīzei un plānošanai nozarē.
+
+###  Pirmskods
 
 ```{r}
 #| warning: false
