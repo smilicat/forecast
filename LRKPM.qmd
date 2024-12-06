@@ -278,7 +278,7 @@ Analizējot datus par darbsapēka izmaksām pārtikas produktu ražošanā no 20
 
 Kopumā, šie dati liecina par stabilu un nepārtrauktu darbsapēka izmaksu pieaugumu pārtikas produktu ražošanā, kas ir svarīgs faktors ekonomiskajai analīzei un plānošanai nozarē.
 
-###  Pirmskods
+### Pirmskods
 
 ```{r}
 #| warning: false

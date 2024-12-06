@@ -1,0 +1,257 @@
+---
+title: "LR prognozēšanu ar regresijas modeļiem"
+---
+
+# Patstāvīgais darbs par laika rindu prognozēšanu ar regresijas modeļiem
+
+**Autors : Kirils Volobujevs**
+
+```{r}
+#| echo: false
+#| warning: false
+# Load required libraries
+library(stats)
+library(forecast)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(dplyr)
+library(patchwork) # To display 2 charts together
+library(hrbrthemes)
+
+
+# Dataset
+di <- data.frame(
+  year = 2014:2023,
+  di_value = c(5.23, 5.83, 6.23, 6.65, 7.58, 8.11, 8.60, 8.75, 9.48, 10.48)
+)
+
+ikp <- data.frame(
+  year = 2014:2023,
+  ikp_value = c(22791, 23744, 24498, 26017, 28153, 29567, 29224, 32285, 36104, 39072)
+)
+
+# Merge data frames by year
+merged_data <- merge(di, ikp, by = "year")
+# Kombinētā grafika koeficients
+coeff <- 3500
+# Korelācijas starpaprēķins
+correlation_result <- cor(merged_data$di_value, merged_data$ikp_value)
+# Lineārās regresijas modelis
+regression_model <- lm(di_value ~ ikp_value + year, data = merged_data)
+
+```
+
+## Sākotnējie dati
+
+[Vienas stundas darbaspēka izmaksas pa darbības veidiem (eiro) 2005 - 2023](https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__EMP__DI__DIS/DIS010/)
+
+[Iekšzemes kopprodukts pavisam, uz vienu iedzīvotāju un uz vienu nodarbināto 1995 - 2023](https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__VEK__IK__IKP/IKP010/)
+
+```{r}
+#| message: false
+#| echo: false
+#| warning: false
+# 1. Descriptive Table
+merged_data %>%
+  kbl(caption = "Darbaspēka izmaksas un IKP vērtības pēc gadiem") %>%
+  kable_styling()
+
+ggplot(merged_data, aes(x=year)) + 
+  geom_line(aes(y=di_value),color="#69b3a2", size=2 )+
+  geom_line(aes(y=ikp_value/coeff),color="grey", size=2 )+
+              scale_y_continuous(
+                name = "Darbaspēka izmaksas",
+                # Add a second axis and specify its features
+               sec.axis = sec_axis(~.*coeff, name="IKP")
+              )+
+    theme_ipsum() +
+    theme(
+    axis.title.y = element_text(color = "#69b3a2", size=13),
+    axis.title.y.right = element_text(color = "grey", size=13)
+  ) +
+  ggtitle("Darbaspēka izmaksas un IKP vērtības pēc gadiem")
+
+```
+
+```{r}
+# 3. Correlation and Regression
+paste0("Korelācijas koeficiets : ",round(correlation_result,3))
+summary(regression_model)
+# ANOVA for the regression model
+anova_result <- anova(regression_model)
+cat("\nANOVA Results for DI vs IKP regression:\n")
+print(anova_result)
+
+# 4. Probability Plots using ggplot2
+
+# Normal Probability Plot
+ggplot(data = data.frame(residuals = rstandard(regression_model)), aes(sample = residuals)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(title = "Normal Probability Plot")
+
+# Density Plot for IKP values
+  ggplot(merged_data, aes(x = di_value)) +
+  geom_density(fill = "lightblue", alpha = 0.5) +
+  labs(title = "Probability Density of DI", x = "IKP Value", y = "Density") +
+  theme_minimal()
+```
+
+```{r}
+
+future_data <- data.frame(
+  year = future_years$year,
+  ikp_value = future_ikp_values
+)
+# Fit a simple model for ikp_value (using your previous ikp data)
+ikp_model <- lm(ikp_value ~ year, data = ikp)
+
+# Predict ikp_value for future years
+future_years <- data.frame(year = 2024:2028)
+future_ikp_values <- predict(ikp_model, newdata = future_years)
+# Use the regression model to predict di_value
+forecast <- predict(regression_model, newdata = future_data, interval = "confidence")
+
+# Combine predictions with the future data
+forecast_results <- cbind(future_data, forecast)
+
+# View the forecasted results
+```
+```{r}
+forecast_results %>%
+  kbl(caption = "Darbaspēka izmaksas prognoze ar lineārās regresijas modeli") %>%
+  kable_styling()
+```
+```{r}
+
+```
+
+
+
+
+
+
+```{r}
+
+
+
+
+
+# 5. Forecasting with ggplot2
+
+# Forecast results using auto.arima
+ts_data <- ts(merged_data$ikp_value, start = min(merged_data$year))
+forecast_result <- forecast(auto.arima(ts_data), h = 3, level = 95)
+
+# Prepare forecast data
+forecast_df <- data.frame(
+  Year = c(merged_data$year, 
+           (max(merged_data$year) + 1):(max(merged_data$year) + 3)),
+  Forecast = c(merged_data$ikp_value, forecast_result$mean),
+  Lower_CI = c(rep(NA, nrow(merged_data)), forecast_result$lower[,1]),
+  Upper_CI = c(rep(NA, nrow(merged_data)), forecast_result$upper[,1])
+)
+
+# Forecast Table
+kable(forecast_df, 
+      caption = "IKP Forecast with Confidence Intervals", 
+      format = "pipe") %>%
+  kable_styling()
+
+# Forecast Plot using ggplot2
+ggplot(forecast_df, aes(x = Year, y = Forecast)) +
+  geom_line(color = "darkgreen", size = 1) +
+  geom_point(color = "darkgreen") +
+  geom_ribbon(aes(ymin = Lower_CI, ymax = Upper_CI), fill = "lightgreen", alpha = 0.5) +
+  labs(title = "IKP Forecast with 95% Confidence Interval", x = "Year", y = "IKP Value") +
+  theme_minimal()
+
+# 6. Statistical Results
+cat("Correlation Coefficient:", correlation_result, "\n\n")
+
+# Regression
+print("Regression Summary:")
+print(summary(regression_model))
+
+# ANOVA
+print("\nANOVA Results:")
+print(anova(regression_model))
+
+```
+
+```{r}
+#| warning: false
+# Load required libraries
+library(stats)
+library(forecast)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+
+# Dataset
+di <- data.frame(
+  year = 2014:2023,
+  di_value = c(5.23, 5.83, 6.23, 6.65, 7.58, 8.11, 8.60, 8.75, 9.48, 10.48)
+)
+
+ikp <- data.frame(
+  year = 2014:2023,
+  ikp_value = c(22791, 23744, 24498, 26017, 28153, 29567, 29224, 32285, 36104, 39072)
+)
+
+# Merge data frames by year (IKP just for analysis, not included in forecast)
+merged_data <- merge(di, ikp, by = "year")
+
+# 1. Combine Time Series Plot for DI and IKP Values Over Time
+ggplot() +
+  geom_line(data = merged_data, aes(x = year, y = di_value), color = "blue", size = 1, linetype = "solid") +
+  geom_point(data = merged_data, aes(x = year, y = di_value), color = "blue") +
+  labs(title = "DI Values Over Time", x = "Year", y = "DI Value") +
+  theme_minimal()
+
+# 2. Combine Probability Density Plots for DI and IKP Values
+ggplot() +
+  geom_density(data = merged_data, aes(x = di_value), fill = "blue", alpha = 0.5) +
+  geom_density(data = merged_data, aes(x = ikp_value), fill = "red", alpha = 0.5) +
+  labs(title = "Probability Density of DI and IKP Values", x = "Value", y = "Density") +
+  theme_minimal()
+
+# 3. Correlation and Regression Analysis (DI vs IKP)
+correlation_result <- cor(merged_data$di_value, merged_data$ikp_value)
+regression_model <- lm(ikp_value ~ di_value, data = merged_data)
+
+
+
+# 4. Forecasting DI with ARIMA Model
+# ARIMA model applied to DI data
+ts_di <- ts(merged_data$di_value, start = min(merged_data$year))
+forecast_di_result <- forecast(auto.arima(ts_di), h = 3, level = 95)
+
+# Prepare forecast data for DI
+forecast_di_df <- data.frame(
+  Year = c(merged_data$year, 
+           (max(merged_data$year) + 1):(max(merged_data$year) + 3)),
+  Forecast_DI = c(merged_data$di_value, forecast_di_result$mean),
+  Lower_CI_DI = c(rep(NA, nrow(merged_data)), forecast_di_result$lower[,1]),
+  Upper_CI_DI = c(rep(NA, nrow(merged_data)), forecast_di_result$upper[,1])
+)
+
+# Forecast Table for DI
+kable(forecast_di_df, 
+      caption = "DI Forecast with Confidence Intervals", 
+      format = "pipe") %>%
+  kable_styling()
+
+# 5. Forecast Plot for DI with UCL/LCL
+ggplot(forecast_di_df, aes(x = Year)) +
+  geom_line(data = merged_data, aes(x = year, y = di_value), color = "blue", size = 1) +  # Original DI line
+  geom_point(data = merged_data, aes(x = year, y = di_value), color = "blue") +  # Original DI points
+  geom_line(aes(y = Forecast_DI), color = "darkgreen", size = 1) +  # Forecasted DI line
+  geom_point(aes(y = Forecast_DI), color = "darkgreen") +  # Forecasted DI points
+  geom_ribbon(aes(ymin = Lower_CI_DI, ymax = Upper_CI_DI), fill = "lightgreen", alpha = 0.5) +  # Confidence interval for DI
+  labs(title = "DI Forecast with 95% Confidence Interval (UCL/LCL)", x = "Year", y = "DI Value") +
+  theme_minimal()
+
+
+```
