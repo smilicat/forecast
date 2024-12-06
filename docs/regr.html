@@ -104,6 +104,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet">
 
+<link href="site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+
+<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+
+<script src="site_libs/jquery-1.11.1/jquery.min.js"></script>
+
+<link href="site_libs/dygraphs-1.1.1/dygraph.css" rel="stylesheet">
+
+<script src="site_libs/dygraphs-1.1.1/dygraph-combined.js"></script>
+
+<script src="site_libs/dygraphs-1.1.1/shapes.js"></script>
+
+<script src="site_libs/moment-2.8.4/moment.js"></script>
+
+<script src="site_libs/moment-timezone-0.2.5/moment-timezone-with-data.js"></script>
+
+<script src="site_libs/moment-fquarter-1.0.0/moment-fquarter.min.js"></script>
+
+<script src="site_libs/dygraphs-binding-1.1.1.6/dygraphs.js"></script>
+
 
 
 <link rel="stylesheet" href="styles.css">
@@ -157,6 +177,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#patstāvīgais-darbs-par-laika-rindu-prognozēšanu-ar-regresijas-modeļiem" id="toc-patstāvīgais-darbs-par-laika-rindu-prognozēšanu-ar-regresijas-modeļiem" class="nav-link active" data-scroll-target="#patstāvīgais-darbs-par-laika-rindu-prognozēšanu-ar-regresijas-modeļiem">Patstāvīgais darbs par laika rindu prognozēšanu ar regresijas modeļiem</a>
   <ul class="collapse">
   <li><a href="#sākotnējie-dati" id="toc-sākotnējie-dati" class="nav-link" data-scroll-target="#sākotnējie-dati">Sākotnējie dati</a></li>
+  <li><a href="#datu-analīze" id="toc-datu-analīze" class="nav-link" data-scroll-target="#datu-analīze">Datu analīze :</a>
+  <ul class="collapse">
+  <li><a href="#korelācija" id="toc-korelācija" class="nav-link" data-scroll-target="#korelācija">Korelācija</a></li>
+  <li><a href="#regresijas-veidošana" id="toc-regresijas-veidošana" class="nav-link" data-scroll-target="#regresijas-veidošana">Regresijas veidošana</a></li>
+  <li><a href="#anova" id="toc-anova" class="nav-link" data-scroll-target="#anova">ANOVA</a></li>
+  </ul></li>
+  <li><a href="#prognozes-veidošana" id="toc-prognozes-veidošana" class="nav-link" data-scroll-target="#prognozes-veidošana">Prognozes veidošana</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -191,14 +218,59 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><a href="https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__EMP__DI__DIS/DIS010/">Vienas stundas darbaspēka izmaksas pa darbības veidiem (eiro) 2005 - 2023</a></p>
 <p><a href="https://data.stat.gov.lv/pxweb/lv/OSP_PUB/START__VEK__IK__IKP/IKP010/">Iekšzemes kopprodukts pavisam, uz vienu iedzīvotāju un uz vienu nodarbināto 1995 - 2023</a></p>
 <div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ielādējam nepieciešamās bibliotēkas</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stats)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forecast)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork) </span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(hrbrthemes)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dygraphs)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(xts)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(zoo)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Ielādējam nepieciešamos datus</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>di <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="dv">2014</span><span class="sc">:</span><span class="dv">2023</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">di_value =</span> <span class="fu">c</span>(<span class="fl">5.23</span>, <span class="fl">5.83</span>, <span class="fl">6.23</span>, <span class="fl">6.65</span>, <span class="fl">7.58</span>, <span class="fl">8.11</span>, <span class="fl">8.60</span>, <span class="fl">8.75</span>, <span class="fl">9.48</span>, <span class="fl">10.48</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>ikp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="dv">2014</span><span class="sc">:</span><span class="dv">2023</span>,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">ikp_value =</span> <span class="fu">c</span>(<span class="dv">22791</span>, <span class="dv">23744</span>, <span class="dv">24498</span>, <span class="dv">26017</span>, <span class="dv">28153</span>, <span class="dv">29567</span>, <span class="dv">29224</span>, <span class="dv">32285</span>, <span class="dv">36104</span>, <span class="dv">39072</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Apvienojam tabulas vadities pēc gada</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>merged_data <span class="ot">&lt;-</span> <span class="fu">merge</span>(di, ikp, <span class="at">by =</span> <span class="st">"year"</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Kombinētā grafika koeficients</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>coeff <span class="ot">&lt;-</span> <span class="dv">3500</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Aprakstošā statistika</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># tabulas vizualizācijas</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>merged_data <span class="sc">%&gt;%</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kbl</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="fu">paste0</span>(<span class="st">"Darbaspēka izmaksas un IKP vērtības pēc gadiem"</span>),</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Gads"</span>, <span class="st">"Darba izmaksas"</span>, <span class="st">"IKP"</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>() </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <table class="table caption-top table-sm table-striped small" data-quarto-postprocess="true">
 <caption>Darbaspēka izmaksas un IKP vērtības pēc gadiem</caption>
 <thead>
 <tr class="header">
-<th style="text-align: right;" data-quarto-table-cell-role="th">year</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">di_value</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">ikp_value</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Gads</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">Darba izmaksas</th>
+<th style="text-align: right;" data-quarto-table-cell-role="th">IKP</th>
 </tr>
 </thead>
 <tbody>
@@ -257,6 +329,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 </div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sākotnējais grafiks</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(merged_data, <span class="fu">aes</span>(<span class="at">x=</span>year)) <span class="sc">+</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y=</span>di_value),<span class="at">color=</span><span class="st">"#69b3a2"</span>, <span class="at">size=</span><span class="dv">2</span> )<span class="sc">+</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y=</span>ikp_value<span class="sc">/</span>coeff),<span class="at">color=</span><span class="st">"grey"</span>, <span class="at">size=</span><span class="dv">2</span> )<span class="sc">+</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>              <span class="fu">scale_y_continuous</span>(</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">name =</span> <span class="st">"Darbaspēka izmaksas"</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                <span class="co"># Add a second axis and specify its features</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">sec.axis =</span> <span class="fu">sec_axis</span>(<span class="sc">~</span>.<span class="sc">*</span>coeff, <span class="at">name=</span><span class="st">"IKP"</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>              )<span class="sc">+</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_ipsum</span>() <span class="sc">+</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title.y =</span> <span class="fu">element_text</span>(<span class="at">color =</span> <span class="st">"#69b3a2"</span>, <span class="at">size=</span><span class="dv">13</span>),</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title.y.right =</span> <span class="fu">element_text</span>(<span class="at">color =</span> <span class="st">"grey"</span>, <span class="at">size=</span><span class="dv">13</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Darbaspēka izmaksas un IKP vērtības pēc gadiem"</span>)<span class="sc">+</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">caption =</span> <span class="fu">paste0</span>(<span class="st">"IKP tiek attēlots mērogā 1:"</span>, coeff))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -265,441 +356,493 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="datu-analīze" class="level2">
+<h2 class="anchored" data-anchor-id="datu-analīze">Datu analīze :</h2>
+<section id="korelācija" class="level3">
+<h3 class="anchored" data-anchor-id="korelācija">Korelācija</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Time Series Plots using ggplot2</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># DI Values Plot</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(merged_data, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> di_value)) <span class="sc">+</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"blue"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"blue"</span>) <span class="sc">+</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"DI Values Over Time"</span>, <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"DI Value"</span>) <span class="sc">+</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="regr_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># IKP Values Plot</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(merged_data, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> ikp_value)) <span class="sc">+</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"red"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"IKP Values Over Time"</span>, <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"IKP Value"</span>) <span class="sc">+</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="regr_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Correlation and Regression</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>correlation_result <span class="ot">&lt;-</span> <span class="fu">cor</span>(merged_data<span class="sc">$</span>di_value, merged_data<span class="sc">$</span>ikp_value)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>regression_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(ikp_value <span class="sc">~</span> di_value, <span class="at">data =</span> merged_data)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Probability Plots using ggplot2</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Normal Probability Plot</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> <span class="fu">data.frame</span>(<span class="at">residuals =</span> <span class="fu">rstandard</span>(regression_model)), <span class="fu">aes</span>(<span class="at">sample =</span> residuals)) <span class="sc">+</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_qq</span>() <span class="sc">+</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_qq_line</span>(<span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Normal Probability Plot"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="regr_files/figure-html/unnamed-chunk-4-3.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Density Plot for IKP values</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(merged_data, <span class="fu">aes</span>(<span class="at">x =</span> ikp_value)) <span class="sc">+</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill =</span> <span class="st">"lightblue"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Probability Density of IKP"</span>, <span class="at">x =</span> <span class="st">"IKP Value"</span>, <span class="at">y =</span> <span class="st">"Density"</span>) <span class="sc">+</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="regr_files/figure-html/unnamed-chunk-4-4.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Forecasting with ggplot2</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Forecast results using auto.arima</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>ts_data <span class="ot">&lt;-</span> <span class="fu">ts</span>(merged_data<span class="sc">$</span>ikp_value, <span class="at">start =</span> <span class="fu">min</span>(merged_data<span class="sc">$</span>year))</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>forecast_result <span class="ot">&lt;-</span> <span class="fu">forecast</span>(<span class="fu">auto.arima</span>(ts_data), <span class="at">h =</span> <span class="dv">3</span>, <span class="at">level =</span> <span class="dv">95</span>)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare forecast data</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>forecast_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">Year =</span> <span class="fu">c</span>(merged_data<span class="sc">$</span>year, </span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>           (<span class="fu">max</span>(merged_data<span class="sc">$</span>year) <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span>(<span class="fu">max</span>(merged_data<span class="sc">$</span>year) <span class="sc">+</span> <span class="dv">3</span>)),</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">Forecast =</span> <span class="fu">c</span>(merged_data<span class="sc">$</span>ikp_value, forecast_result<span class="sc">$</span>mean),</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">Lower_CI =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(merged_data)), forecast_result<span class="sc">$</span>lower[,<span class="dv">1</span>]),</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">Upper_CI =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(merged_data)), forecast_result<span class="sc">$</span>upper[,<span class="dv">1</span>])</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Forecast Table</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(forecast_df, </span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption =</span> <span class="st">"IKP Forecast with Confidence Intervals"</span>, </span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">format =</span> <span class="st">"pipe"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<table class="table caption-top table-sm table-striped small" data-quarto-postprocess="true">
-<caption>IKP Forecast with Confidence Intervals</caption>
-<thead>
-<tr class="header">
-<th style="text-align: right;" data-quarto-table-cell-role="th">Year</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">Forecast</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">Lower_CI</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">Upper_CI</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: right;">2014</td>
-<td style="text-align: right;">22791</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">2015</td>
-<td style="text-align: right;">23744</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">2016</td>
-<td style="text-align: right;">24498</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">2017</td>
-<td style="text-align: right;">26017</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">2018</td>
-<td style="text-align: right;">28153</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">2019</td>
-<td style="text-align: right;">29567</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">2020</td>
-<td style="text-align: right;">29224</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">2021</td>
-<td style="text-align: right;">32285</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">2022</td>
-<td style="text-align: right;">36104</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">2023</td>
-<td style="text-align: right;">39072</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">2024</td>
-<td style="text-align: right;">40881</td>
-<td style="text-align: right;">38309.11</td>
-<td style="text-align: right;">43452.89</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">2025</td>
-<td style="text-align: right;">42690</td>
-<td style="text-align: right;">39052.80</td>
-<td style="text-align: right;">46327.20</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">2026</td>
-<td style="text-align: right;">44499</td>
-<td style="text-align: right;">40044.35</td>
-<td style="text-align: right;">48953.65</td>
-</tr>
-</tbody>
-</table>
-
-
-</div>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Forecast Plot using ggplot2</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(forecast_df, <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> Forecast)) <span class="sc">+</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"darkgreen"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"darkgreen"</span>) <span class="sc">+</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> Lower_CI, <span class="at">ymax =</span> Upper_CI), <span class="at">fill =</span> <span class="st">"lightgreen"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"IKP Forecast with 95% Confidence Interval"</span>, <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"IKP Value"</span>) <span class="sc">+</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="regr_files/figure-html/unnamed-chunk-4-5.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 6. Statistical Results</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Correlation Coefficient:"</span>, correlation_result, <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Korelācijas aprēķins un attēlošana</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>correlation_result <span class="ot">&lt;-</span> <span class="fu">cor</span>(merged_data<span class="sc">$</span>di_value, merged_data<span class="sc">$</span>ikp_value)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Korelācijas koeficiets : "</span>,<span class="fu">round</span>(correlation_result,<span class="dv">3</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Correlation Coefficient: 0.9723517 </code></pre>
+<pre><code>Korelācijas koeficiets :  0.972</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Regression</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Regression Summary:"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>scatter_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(merged_data, <span class="fu">aes</span>(<span class="at">x =</span> ikp_value, <span class="at">y =</span> di_value)) <span class="sc">+</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">color =</span> <span class="st">"blue"</span>) <span class="sc">+</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"DI Value vs IKP Value"</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"IKP Value"</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"DI Value"</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="fu">paste</span>(<span class="st">"Correlation:"</span>, <span class="fu">round</span>(correlation_result, <span class="dv">3</span>))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(scatter_plot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="regr_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="regresijas-veidošana" class="level3">
+<h3 class="anchored" data-anchor-id="regresijas-veidošana">Regresijas veidošana</h3>
+<div class="cell">
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "Regression Summary:"</code></pre>
+<pre><code>Regresijas modeļa analīze:</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(regression_model))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>
-Call:
-lm(formula = ikp_value ~ di_value, data = merged_data)
-
-Residuals:
-     Min       1Q   Median       3Q      Max 
--2709.45  -516.89   -12.96  1004.41  1462.60 
-
-Coefficients:
-            Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)   5469.4     2053.8   2.663   0.0287 *  
-di_value      3077.2      261.3  11.777 2.47e-06 ***
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Residual standard error: 1329 on 8 degrees of freedom
-Multiple R-squared:  0.9455,    Adjusted R-squared:  0.9387 
-F-statistic: 138.7 on 1 and 8 DF,  p-value: 2.473e-06</code></pre>
+<pre><code>------------------------</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ANOVA</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">ANOVA Results:"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "\nANOVA Results:"</code></pre>
+<pre><code>Atakarīgais mainīgais: Darba izmaksas</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">anova</span>(regression_model))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Neotkarīgais mainīgais: IKP</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>------------------------</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Koeficienti:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Intercept: -1.2609 (p-value: 0.141 )</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Slope: 3e-04 (p-value: 0 )</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>------------------------</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Model Fit:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R-squared: 0.9455 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Adjusted R-squared: 0.9387 </code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>F-statistic: 138.7025 on 1 and 8 DF</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>p-value: 0 </code></pre>
+</div>
+</div>
+</section>
+<section id="anova" class="level3">
+<h3 class="anchored" data-anchor-id="anova">ANOVA</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ANOVA </span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>anova_result <span class="ot">&lt;-</span> <span class="fu">anova</span>(regression_model)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"ANOVA rezultāts darba izmaksu un IKP regresijai:"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>ANOVA rezultāts darba izmaksu un IKP regresijai:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>anova_result</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Analysis of Variance Table
 
-Response: ikp_value
-          Df    Sum Sq   Mean Sq F value    Pr(&gt;F)    
-di_value   1 244804419 244804419   138.7 2.473e-06 ***
-Residuals  8  14119688   1764961                      
+Response: di_value
+          Df  Sum Sq Mean Sq F value    Pr(&gt;F)    
+ikp_value  1 24.4428 24.4428   138.7 2.473e-06 ***
+Residuals  8  1.4098  0.1762                      
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 </div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Normal Probability Plot</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> <span class="fu">data.frame</span>(<span class="at">residuals =</span> <span class="fu">rstandard</span>(regression_model)), <span class="fu">aes</span>(<span class="at">sample =</span> residuals)) <span class="sc">+</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_qq</span>() <span class="sc">+</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_qq_line</span>(<span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Normal Probability Plot"</span>)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Density Plot for DI vlues</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(merged_data, <span class="fu">aes</span>(<span class="at">x =</span> di_value)) <span class="sc">+</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill =</span> <span class="st">"lightblue"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Probability Density of DI"</span>, <span class="at">x =</span> <span class="st">"IKP Value"</span>, <span class="at">y =</span> <span class="st">"Density"</span>) <span class="sc">+</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><img src="regr_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><img src="regr_files/figure-html/unnamed-chunk-6-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="prognozes-veidošana" class="level2">
+<h2 class="anchored" data-anchor-id="prognozes-veidošana">Prognozes veidošana</h2>
+<p>Prognozes veidošanai tiek izveidotas izmantot regresijas modelis un prognozētās IKP vērtības]</p>
+<p>Prognozēšanas intervāls ir konservatīvi - 5 gadi.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load required libraries</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stats)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forecast)</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Dataset</span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>di <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="dv">2014</span><span class="sc">:</span><span class="dv">2023</span>,</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">di_value =</span> <span class="fu">c</span>(<span class="fl">5.23</span>, <span class="fl">5.83</span>, <span class="fl">6.23</span>, <span class="fl">6.65</span>, <span class="fl">7.58</span>, <span class="fl">8.11</span>, <span class="fl">8.60</span>, <span class="fl">8.75</span>, <span class="fl">9.48</span>, <span class="fl">10.48</span>)</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>ikp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="dv">2014</span><span class="sc">:</span><span class="dv">2023</span>,</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">ikp_value =</span> <span class="fu">c</span>(<span class="dv">22791</span>, <span class="dv">23744</span>, <span class="dv">24498</span>, <span class="dv">26017</span>, <span class="dv">28153</span>, <span class="dv">29567</span>, <span class="dv">29224</span>, <span class="dv">32285</span>, <span class="dv">36104</span>, <span class="dv">39072</span>)</span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge data frames by year (IKP just for analysis, not included in forecast)</span></span>
-<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>merged_data <span class="ot">&lt;-</span> <span class="fu">merge</span>(di, ikp, <span class="at">by =</span> <span class="st">"year"</span>)</span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Combine Time Series Plot for DI and IKP Values Over Time</span></span>
-<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> merged_data, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> di_value), <span class="at">color =</span> <span class="st">"blue"</span>, <span class="at">size =</span> <span class="dv">1</span>, <span class="at">linetype =</span> <span class="st">"solid"</span>) <span class="sc">+</span></span>
-<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> merged_data, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> di_value), <span class="at">color =</span> <span class="st">"blue"</span>) <span class="sc">+</span></span>
-<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"DI Values Over Time"</span>, <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"DI Value"</span>) <span class="sc">+</span></span>
-<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># IKP lineārā prognozēšana</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>future_years <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">year =</span> <span class="dv">2024</span><span class="sc">:</span><span class="dv">2028</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>ikp_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(ikp_value <span class="sc">~</span> year, <span class="at">data =</span> ikp)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>future_ikp_values <span class="ot">&lt;-</span> <span class="fu">predict</span>(ikp_model, <span class="at">newdata =</span> future_years, <span class="at">interval =</span> <span class="st">"confidence"</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Inicializējam prognozes tabulu</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>future_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> future_years<span class="sc">$</span>year,</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">ikp_value =</span> future_ikp_values[, <span class="st">"fit"</span>],   <span class="co"># Predicted ikp values</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">Lower_CI_IKP =</span> future_ikp_values[, <span class="st">"lwr"</span>],    <span class="co"># Lower confidence interval</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">Upper_CI_IKP =</span> future_ikp_values[, <span class="st">"upr"</span>]     <span class="co"># Upper confidence interval</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Izmantojot regresijas modeli, prognozējam DI vērtības</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>forecast <span class="ot">&lt;-</span> <span class="fu">predict</span>(regression_model, <span class="at">newdata =</span> future_data, <span class="at">interval =</span> <span class="st">"confidence"</span>)</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Apvienojam prognozes tabulu ar prognozi</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>forecast_results <span class="ot">&lt;-</span> <span class="fu">cbind</span>(future_data, forecast)</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Aizpildām prognozes tabulu</span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>forecast_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">Year =</span> <span class="fu">c</span>(ikp<span class="sc">$</span>year, future_data<span class="sc">$</span>year),</span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">Forecast =</span> <span class="fu">c</span>(di<span class="sc">$</span>di_value, forecast_results[, <span class="st">"fit"</span>]),</span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">Lower_CI =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(di)), forecast_results[, <span class="st">"lwr"</span>]),</span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">Upper_CI =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(di)), forecast_results[, <span class="st">"upr"</span>]),</span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">IKP_Value =</span> <span class="fu">c</span>(ikp<span class="sc">$</span>ikp_value, future_data<span class="sc">$</span>ikp_value),</span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">IKP_Lower_CI =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(di)), future_data<span class="sc">$</span>Lower_CI_IKP),</span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">IKP_Upper_CI =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(di)), future_data<span class="sc">$</span>Upper_CI_IKP)</span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Vizualizējam tabulu</span></span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a>forecast_df <span class="sc">%&gt;%</span></span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kbl</span>(</span>
+<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">"Darbaspēka izmaksas prognoze ar lineārās regresijas modeli"</span>, </span>
+<span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Gads"</span>, <span class="st">"DI Prognoze"</span>, <span class="st">"DI LCL"</span>, <span class="st">"DI UCL"</span>, <span class="st">"IKP"</span>, <span class="st">"IKP LCL"</span>, <span class="st">"IKP UCL"</span>),</span>
+<span id="cb26-37"><a href="#cb26-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">decimal.mark =</span> <span class="st">","</span>, <span class="at">big.mark =</span> <span class="st">" "</span>),</span>
+<span id="cb26-38"><a href="#cb26-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">digits =</span> <span class="dv">2</span></span>
+<span id="cb26-39"><a href="#cb26-39" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb26-40"><a href="#cb26-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(</span>
+<span id="cb26-41"><a href="#cb26-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">bootstrap_options =</span> <span class="fu">c</span>(<span class="st">"striped"</span>, <span class="st">"hover"</span>, <span class="st">"condensed"</span>, <span class="st">"responsive"</span>),</span>
+<span id="cb26-42"><a href="#cb26-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">full_width =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb26-43"><a href="#cb26-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="st">"center"</span></span>
+<span id="cb26-44"><a href="#cb26-44" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">row_spec</span>(<span class="dv">0</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>, <span class="at">color =</span> <span class="st">"white"</span>, <span class="at">background =</span> <span class="st">"#4E79A7"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_spec</span>(<span class="dv">1</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb26-47"><a href="#cb26-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_header_above</span>(</span>
+<span id="cb26-48"><a href="#cb26-48" aria-hidden="true" tabindex="-1"></a>    <span class="fu">c</span>(<span class="st">" "</span> <span class="ot">=</span> <span class="dv">1</span>, <span class="st">"Darbaspēka izmaksas"</span> <span class="ot">=</span> <span class="dv">3</span>, <span class="st">"IKP"</span> <span class="ot">=</span> <span class="dv">3</span>)</span>
+<span id="cb26-49"><a href="#cb26-49" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="regr_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Combine Probability Density Plots for DI and IKP Values</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">data =</span> merged_data, <span class="fu">aes</span>(<span class="at">x =</span> di_value), <span class="at">fill =</span> <span class="st">"blue"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">data =</span> merged_data, <span class="fu">aes</span>(<span class="at">x =</span> ikp_value), <span class="at">fill =</span> <span class="st">"red"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Probability Density of DI and IKP Values"</span>, <span class="at">x =</span> <span class="st">"Value"</span>, <span class="at">y =</span> <span class="st">"Density"</span>) <span class="sc">+</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="regr_files/figure-html/unnamed-chunk-5-2.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Correlation and Regression Analysis (DI vs IKP)</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>correlation_result <span class="ot">&lt;-</span> <span class="fu">cor</span>(merged_data<span class="sc">$</span>di_value, merged_data<span class="sc">$</span>ikp_value)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>regression_model <span class="ot">&lt;-</span> <span class="fu">lm</span>(ikp_value <span class="sc">~</span> di_value, <span class="at">data =</span> merged_data)</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ANOVA for the regression model</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>anova_result <span class="ot">&lt;-</span> <span class="fu">anova</span>(regression_model)</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">ANOVA Results for DI vs IKP regression:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-ANOVA Results for DI vs IKP regression:</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(anova_result)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Analysis of Variance Table
-
-Response: ikp_value
-          Df    Sum Sq   Mean Sq F value    Pr(&gt;F)    
-di_value   1 244804419 244804419   138.7 2.473e-06 ***
-Residuals  8  14119688   1764961                      
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Forecasting DI with ARIMA Model</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ARIMA model applied to DI data</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>ts_di <span class="ot">&lt;-</span> <span class="fu">ts</span>(merged_data<span class="sc">$</span>di_value, <span class="at">start =</span> <span class="fu">min</span>(merged_data<span class="sc">$</span>year))</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>forecast_di_result <span class="ot">&lt;-</span> <span class="fu">forecast</span>(<span class="fu">auto.arima</span>(ts_di), <span class="at">h =</span> <span class="dv">3</span>, <span class="at">level =</span> <span class="dv">95</span>)</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare forecast data for DI</span></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>forecast_di_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Year =</span> <span class="fu">c</span>(merged_data<span class="sc">$</span>year, </span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>           (<span class="fu">max</span>(merged_data<span class="sc">$</span>year) <span class="sc">+</span> <span class="dv">1</span>)<span class="sc">:</span>(<span class="fu">max</span>(merged_data<span class="sc">$</span>year) <span class="sc">+</span> <span class="dv">3</span>)),</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">Forecast_DI =</span> <span class="fu">c</span>(merged_data<span class="sc">$</span>di_value, forecast_di_result<span class="sc">$</span>mean),</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">Lower_CI_DI =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(merged_data)), forecast_di_result<span class="sc">$</span>lower[,<span class="dv">1</span>]),</span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">Upper_CI_DI =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(merged_data)), forecast_di_result<span class="sc">$</span>upper[,<span class="dv">1</span>])</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Forecast Table for DI</span></span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(forecast_di_df, </span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption =</span> <span class="st">"DI Forecast with Confidence Intervals"</span>, </span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">format =</span> <span class="st">"pipe"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<table class="table caption-top table-sm table-striped small" data-quarto-postprocess="true">
-<caption>DI Forecast with Confidence Intervals</caption>
+<div class="table-responsive">
+<table class="table table-striped table-hover table-condensed caption-top table-sm small" data-quarto-postprocess="true">
+<caption>Darbaspēka izmaksas prognoze ar lineārās regresijas modeli</caption>
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: right;" data-quarto-table-cell-role="th">Year</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">Forecast_DI</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">Lower_CI_DI</th>
-<th style="text-align: right;" data-quarto-table-cell-role="th">Upper_CI_DI</th>
+<th data-quarto-table-cell-role="th" style="text-align: right; empty-cells: hide; border-bottom: hidden;"></th>
+<th colspan="3" data-quarto-table-cell-role="th" style="text-align: center; border-bottom: hidden; padding-bottom: 0; padding-left: 3px; padding-right: 3px;"><div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Darbaspēka izmaksas
+</div></th>
+<th colspan="3" data-quarto-table-cell-role="th" style="text-align: center; border-bottom: hidden; padding-bottom: 0; padding-left: 3px; padding-right: 3px;"><div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+IKP
+</div></th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th" style="text-align: right; font-weight: bold; color: white !important; background-color: rgba(78, 121, 167, 255) !important;">Gads</th>
+<th data-quarto-table-cell-role="th" style="text-align: right; font-weight: bold; color: white !important; background-color: rgba(78, 121, 167, 255) !important;">DI Prognoze</th>
+<th data-quarto-table-cell-role="th" style="text-align: right; font-weight: bold; color: white !important; background-color: rgba(78, 121, 167, 255) !important;">DI LCL</th>
+<th data-quarto-table-cell-role="th" style="text-align: right; font-weight: bold; color: white !important; background-color: rgba(78, 121, 167, 255) !important;">DI UCL</th>
+<th data-quarto-table-cell-role="th" style="text-align: right; font-weight: bold; color: white !important; background-color: rgba(78, 121, 167, 255) !important;">IKP</th>
+<th data-quarto-table-cell-role="th" style="text-align: right; font-weight: bold; color: white !important; background-color: rgba(78, 121, 167, 255) !important;">IKP LCL</th>
+<th data-quarto-table-cell-role="th" style="text-align: right; font-weight: bold; color: white !important; background-color: rgba(78, 121, 167, 255) !important;">IKP UCL</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">2014</td>
-<td style="text-align: right;">5.23000</td>
+<td style="text-align: right; font-weight: bold;">2 014</td>
+<td style="text-align: right;">5,23</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">22 791,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2015</td>
-<td style="text-align: right;">5.83000</td>
+<td style="text-align: right; font-weight: bold;">2 015</td>
+<td style="text-align: right;">5,83</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">23 744,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">2016</td>
-<td style="text-align: right;">6.23000</td>
+<td style="text-align: right; font-weight: bold;">2 016</td>
+<td style="text-align: right;">6,23</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">24 498,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2017</td>
-<td style="text-align: right;">6.65000</td>
+<td style="text-align: right; font-weight: bold;">2 017</td>
+<td style="text-align: right;">6,65</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">26 017,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">2018</td>
-<td style="text-align: right;">7.58000</td>
+<td style="text-align: right; font-weight: bold;">2 018</td>
+<td style="text-align: right;">7,58</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">28 153,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2019</td>
-<td style="text-align: right;">8.11000</td>
+<td style="text-align: right; font-weight: bold;">2 019</td>
+<td style="text-align: right;">8,11</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">29 567,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">2020</td>
-<td style="text-align: right;">8.60000</td>
+<td style="text-align: right; font-weight: bold;">2 020</td>
+<td style="text-align: right;">8,60</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">29 224,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2021</td>
-<td style="text-align: right;">8.75000</td>
+<td style="text-align: right; font-weight: bold;">2 021</td>
+<td style="text-align: right;">8,75</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">32 285,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">2022</td>
-<td style="text-align: right;">9.48000</td>
+<td style="text-align: right; font-weight: bold;">2 022</td>
+<td style="text-align: right;">9,48</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">36 104,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2023</td>
-<td style="text-align: right;">10.48000</td>
+<td style="text-align: right; font-weight: bold;">2 023</td>
+<td style="text-align: right;">10,48</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">39 072,00</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">2024</td>
-<td style="text-align: right;">11.06333</td>
-<td style="text-align: right;">10.53778</td>
-<td style="text-align: right;">11.58889</td>
+<td style="text-align: right; font-weight: bold;">2 024</td>
+<td style="text-align: right;">10,59</td>
+<td style="text-align: right;">9,95</td>
+<td style="text-align: right;">11,24</td>
+<td style="text-align: right;">38 579,47</td>
+<td style="text-align: right;">36 337,94</td>
+<td style="text-align: right;">40 820,99</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2025</td>
-<td style="text-align: right;">11.64667</td>
-<td style="text-align: right;">10.90342</td>
-<td style="text-align: right;">12.38992</td>
+<td style="text-align: right; font-weight: bold;">2 025</td>
+<td style="text-align: right;">11,12</td>
+<td style="text-align: right;">10,38</td>
+<td style="text-align: right;">11,86</td>
+<td style="text-align: right;">40 294,73</td>
+<td style="text-align: right;">37 727,54</td>
+<td style="text-align: right;">42 861,93</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">2026</td>
-<td style="text-align: right;">12.23000</td>
-<td style="text-align: right;">11.31971</td>
-<td style="text-align: right;">13.14029</td>
+<td style="text-align: right; font-weight: bold;">2 026</td>
+<td style="text-align: right;">11,65</td>
+<td style="text-align: right;">10,81</td>
+<td style="text-align: right;">12,48</td>
+<td style="text-align: right;">42 010,00</td>
+<td style="text-align: right;">39 108,70</td>
+<td style="text-align: right;">44 911,30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right; font-weight: bold;">2 027</td>
+<td style="text-align: right;">12,17</td>
+<td style="text-align: right;">11,24</td>
+<td style="text-align: right;">13,10</td>
+<td style="text-align: right;">43 725,27</td>
+<td style="text-align: right;">40 484,03</td>
+<td style="text-align: right;">46 966,51</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right; font-weight: bold;">2 028</td>
+<td style="text-align: right;">12,70</td>
+<td style="text-align: right;">11,67</td>
+<td style="text-align: right;">13,73</td>
+<td style="text-align: right;">45 440,53</td>
+<td style="text-align: right;">41 855,19</td>
+<td style="text-align: right;">49 025,88</td>
 </tr>
 </tbody>
 </table>
+</div>
 
 
 </div>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. Forecast Plot for DI with UCL/LCL</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(forecast_di_df, <span class="fu">aes</span>(<span class="at">x =</span> Year)) <span class="sc">+</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> merged_data, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> di_value), <span class="at">color =</span> <span class="st">"blue"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span>  <span class="co"># Original DI line</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> merged_data, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> di_value), <span class="at">color =</span> <span class="st">"blue"</span>) <span class="sc">+</span>  <span class="co"># Original DI points</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> Forecast_DI), <span class="at">color =</span> <span class="st">"darkgreen"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span>  <span class="co"># Forecasted DI line</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">y =</span> Forecast_DI), <span class="at">color =</span> <span class="st">"darkgreen"</span>) <span class="sc">+</span>  <span class="co"># Forecasted DI points</span></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> Lower_CI_DI, <span class="at">ymax =</span> Upper_CI_DI), <span class="at">fill =</span> <span class="st">"lightgreen"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span>  <span class="co"># Confidence interval for DI</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"DI Forecast with 95% Confidence Interval (UCL/LCL)"</span>, <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"DI Value"</span>) <span class="sc">+</span></span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prognozes vizualizācija funkcijas izveidošana</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>plot_forecast <span class="ot">&lt;-</span> <span class="cf">function</span>(forecast_df) {</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Atdalām vēstures un prognozes datus</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  historical_data <span class="ot">&lt;-</span> forecast_df <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">is.na</span>(Lower_CI))</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  future_data <span class="ot">&lt;-</span> forecast_df <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Lower_CI))</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Attēlojam vēsturiskos datus</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">data =</span> historical_data, </span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> Forecast), </span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>               <span class="at">color =</span> <span class="st">"blue"</span>, </span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>               <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Punkti prognozes</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">data =</span> future_data, </span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>               <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> Forecast), </span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>               <span class="at">color =</span> <span class="st">"red"</span>, </span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>               <span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># prognozes līnija</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">data =</span> forecast_df, </span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>              <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> Forecast), </span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>              <span class="at">color =</span> <span class="st">"red"</span>, </span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>              <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Ticamības intervāls</span></span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_ribbon</span>(<span class="at">data =</span> future_data, </span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>                <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">ymin =</span> Lower_CI, <span class="at">ymax =</span> Upper_CI), </span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>                <span class="at">alpha =</span> <span class="fl">0.2</span>, </span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a>                <span class="at">fill =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Pievienojam labelus un leģendu</span></span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a>      <span class="at">title =</span> <span class="st">"Darba izmaksu prognoze"</span>,</span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> <span class="st">"Gads"</span>,</span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> <span class="st">"Prognoze"</span>,</span>
+<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption =</span> <span class="st">"Zilie punkti: vēsturiskie dati</span><span class="sc">\n</span><span class="st">Sarkanie punkti: Prognozes dati</span><span class="sc">\n</span><span class="st">Sarkanā lenta: 95% Ticamības intervāls"</span></span>
+<span id="cb27-39"><a href="#cb27-39" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb27-40"><a href="#cb27-40" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb27-41"><a href="#cb27-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb27-42"><a href="#cb27-42" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(</span>
+<span id="cb27-43"><a href="#cb27-43" aria-hidden="true" tabindex="-1"></a>      <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb27-44"><a href="#cb27-44" aria-hidden="true" tabindex="-1"></a>      <span class="at">plot.caption =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="dv">0</span>, <span class="at">face =</span> <span class="st">"italic"</span>)</span>
+<span id="cb27-45"><a href="#cb27-45" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb27-46"><a href="#cb27-46" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb27-47"><a href="#cb27-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-48"><a href="#cb27-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Prognozes funkcijas izsaukšana</span></span>
+<span id="cb27-49"><a href="#cb27-49" aria-hidden="true" tabindex="-1"></a>forecast_plot <span class="ot">&lt;-</span> <span class="fu">plot_forecast</span>(forecast_df)</span>
+<span id="cb27-50"><a href="#cb27-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-51"><a href="#cb27-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Grafika vizualizācija</span></span>
+<span id="cb27-52"><a href="#cb27-52" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(forecast_plot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="regr_files/figure-html/unnamed-chunk-5-3.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="regr_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Interatīvā grafika veidošana</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>prepare_dygraph_data <span class="ot">&lt;-</span> <span class="cf">function</span>(forecast_df) {</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  historical_data <span class="ot">&lt;-</span> forecast_df[<span class="fu">is.na</span>(forecast_df<span class="sc">$</span>Lower_CI), ]</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  future_data <span class="ot">&lt;-</span> forecast_df[<span class="sc">!</span><span class="fu">is.na</span>(forecast_df<span class="sc">$</span>Lower_CI), ]</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>  full_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">Year =</span> <span class="fu">c</span>(historical_data<span class="sc">$</span>Year, future_data<span class="sc">$</span>Year),</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">Izmaksas =</span> <span class="fu">c</span>(historical_data<span class="sc">$</span>Forecast, <span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(future_data))),</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Prognoze =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(historical_data)), future_data<span class="sc">$</span>Forecast),</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">LCL =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(historical_data)), future_data<span class="sc">$</span>Lower_CI),</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">UCL =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="cn">NA</span>, <span class="fu">nrow</span>(historical_data)), future_data<span class="sc">$</span>Upper_CI)</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>  time_series_data <span class="ot">&lt;-</span> <span class="fu">xts</span>(</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> full_data[, <span class="fu">c</span>(<span class="st">"Izmaksas"</span>, <span class="st">"Prognoze"</span>, <span class="st">"LCL"</span>, <span class="st">"UCL"</span>)], </span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">order.by =</span> <span class="fu">as.Date</span>(<span class="fu">paste0</span>(full_data<span class="sc">$</span>Year, <span class="st">"-01-01"</span>))</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dygraph</span>(time_series_data, <span class="at">main =</span> <span class="st">"Darbaspēka izmaksu vēsturiskie dati un prognoze"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dySeries</span>(<span class="st">"Izmaksas"</span>, <span class="at">label =</span> <span class="st">"Vēsturiskie dati"</span>, <span class="at">color =</span> <span class="st">"#1F77B4"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dySeries</span>(<span class="st">"Prognoze"</span>, <span class="at">label =</span> <span class="st">"Prognoze"</span>, <span class="at">color =</span> <span class="st">"#FF7F0E"</span>, <span class="at">strokePattern =</span> <span class="st">"dashed"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dySeries</span>(<span class="st">"LCL"</span>, <span class="at">label =</span> <span class="st">"Apakšējā ticamības robeža"</span>, <span class="at">color =</span> <span class="st">"blue"</span>, <span class="at">strokeWidth =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dySeries</span>(<span class="st">"UCL"</span>, <span class="at">label =</span> <span class="st">"Augšējā ticamības robeža"</span>, <span class="at">color =</span> <span class="st">"blue"</span>, <span class="at">strokeWidth =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dyAxis</span>(<span class="st">"x"</span>, <span class="at">label =</span> <span class="st">"Gads"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dyAxis</span>(<span class="st">"y"</span>, <span class="at">label =</span> <span class="st">"Izmaksas (eiro/st)"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb28-33"><a href="#cb28-33" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb28-34"><a href="#cb28-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dyLegend</span>(<span class="at">show =</span> <span class="st">"always"</span>, <span class="at">hideOnMouseOut =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-35"><a href="#cb28-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dyOptions</span>(</span>
+<span id="cb28-36"><a href="#cb28-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">fillGraph =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb28-37"><a href="#cb28-37" aria-hidden="true" tabindex="-1"></a>      <span class="at">drawGrid =</span> <span class="cn">TRUE</span></span>
+<span id="cb28-38"><a href="#cb28-38" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb28-39"><a href="#cb28-39" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dyRangeSelector</span>()</span>
+<span id="cb28-40"><a href="#cb28-40" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb28-41"><a href="#cb28-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-42"><a href="#cb28-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-43"><a href="#cb28-43" aria-hidden="true" tabindex="-1"></a>forecast_dygraph <span class="ot">&lt;-</span> <span class="fu">prepare_dygraph_data</span>(forecast_df)</span>
+<span id="cb28-44"><a href="#cb28-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-45"><a href="#cb28-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-46"><a href="#cb28-46" aria-hidden="true" tabindex="-1"></a>forecast_dygraph</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="dygraphs html-widget html-fill-item" id="htmlwidget-317ea6d37b160c0376a0" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-317ea6d37b160c0376a0">{"x":{"attrs":{"axes":{"x":{"pixelsPerLabel":60,"drawAxis":true},"y":{"drawAxis":true}},"series":{"Vēsturiskie dati":{"axis":"y"},"Prognoze":{"axis":"y","strokePattern":[7,3]},"Apakšējā ticamības robeža":{"axis":"y","strokeWidth":1},"Augšējā ticamības robeža":{"axis":"y","strokeWidth":1}},"title":"Darbaspēka izmaksu vēsturiskie dati un prognoze","labels":["year","Vēsturiskie dati","Prognoze","Apakšējā ticamības robeža","Augšējā ticamības robeža"],"retainDateWindow":false,"colors":["#1F77B4","#FF7F0E","blue","blue"],"xlabel":"Gads","ylabel":"Izmaksas (eiro/st)","legend":"always","labelsDivWidth":250,"labelsShowZeroValues":true,"labelsSeparateLines":false,"hideOverlayOnMouseOut":false,"stackedGraph":false,"fillGraph":false,"fillAlpha":0.15,"stepPlot":false,"drawPoints":false,"pointSize":1,"drawGapEdgePoints":false,"connectSeparatedPoints":false,"strokeWidth":1,"strokeBorderColor":"white","colorValue":0.5,"colorSaturation":1,"includeZero":false,"drawAxesAtZero":false,"logscale":false,"axisTickSize":3,"axisLineColor":"black","axisLineWidth":0.3,"axisLabelColor":"black","axisLabelFontSize":14,"axisLabelWidth":60,"drawGrid":true,"gridLineWidth":0.3,"rightGap":5,"digitsAfterDecimal":2,"labelsKMB":false,"labelsKMG2":false,"labelsUTC":false,"maxNumberWidth":6,"animatedZooms":false,"mobileDisableYTouch":true,"disableZoom":false,"showRangeSelector":true,"rangeSelectorHeight":40,"rangeSelectorPlotFillColor":" #A7B1C4","rangeSelectorPlotStrokeColor":"#808FAB","interactionModel":"Dygraph.Interaction.defaultModel"},"scale":"yearly","annotations":[],"shadings":[],"events":[],"format":"date","data":[["2014-01-01T00:00:00.000Z","2015-01-01T00:00:00.000Z","2016-01-01T00:00:00.000Z","2017-01-01T00:00:00.000Z","2018-01-01T00:00:00.000Z","2019-01-01T00:00:00.000Z","2020-01-01T00:00:00.000Z","2021-01-01T00:00:00.000Z","2022-01-01T00:00:00.000Z","2023-01-01T00:00:00.000Z","2024-01-01T00:00:00.000Z","2025-01-01T00:00:00.000Z","2026-01-01T00:00:00.000Z","2027-01-01T00:00:00.000Z","2028-01-01T00:00:00.000Z"],[5.23,5.83,6.23,6.65,7.58,8.109999999999999,8.6,8.75,9.48,10.48,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,10.59257089277887,11.119583782375,11.64659667197114,12.17360956156727,12.7006224511634],[null,null,null,null,null,null,null,null,null,null,9.947729728476652,10.38229198003093,10.81432580929095,11.24460639237645,11.67362902357767],[null,null,null,null,null,null,null,null,null,null,11.23741205708109,11.85687558471907,12.47886753465132,13.10261273075809,13.72761587874912]],"fixedtz":false,"tzone":"UTC"},"evals":["attrs.interactionModel"],"jsHooks":[]}</script>
 </div>
 </div>
 
